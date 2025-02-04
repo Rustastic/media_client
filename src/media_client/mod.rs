@@ -1,26 +1,25 @@
 use std::collections::HashMap;
 
-use colored::Colorize;
-use crossbeam_channel::{select_biased, Receiver, Sender};
-use high_level_message_handler::HighLevelMessageHandler;
-use log::{error, warn};
+use assembler::HighLevelMessageFactory;
 use messages::{
     client_commands::{MediaClientCommand, MediaClientEvent},
     high_level_messages::{ClientMessage, MessageContent::FromClient},
 };
 use source_routing::Router;
+
+use colored::Colorize;
+use crossbeam_channel::{select_biased, Receiver, Sender};
+use log::{error, warn};
 use wg_2024::{
     network::NodeId,
     packet::{NodeType, Packet},
 };
 
-mod high_level_message_handler;
-
 struct MediaClient {
     id: NodeId,
 
     router: Router,
-    high_level_message_handler: HighLevelMessageHandler,
+    message_factory: HighLevelMessageFactory,
 
     controller_send: Sender<MediaClientEvent>,
     controller_recv: Receiver<MediaClientCommand>,
@@ -41,7 +40,7 @@ impl MediaClient {
         Self {
             id,
             router: Router::new(id, NodeType::Client),
-            high_level_message_handler: HighLevelMessageHandler::new(id, NodeType::Client),
+            message_factory: HighLevelMessageFactory::new(id, NodeType::Client),
             controller_send,
             controller_recv,
             packet_recv,
@@ -176,10 +175,11 @@ impl MediaClient {
             MediaClientCommand::AskForMedia(_, media_id) => ClientMessage::GetMedia(media_id),
             _ => return,
         };
-        for fragment_packet in self
-            .high_level_message_handler
-            .get_message_from_message_content(FromClient(client_message), &header)
-        {
+        for fragment_packet in self.message_factory.get_message_from_message_content(
+            FromClient(client_message),
+            &header,
+            destination,
+        ) {
             self.send_to(fragment_packet, sender);
         }
     }
