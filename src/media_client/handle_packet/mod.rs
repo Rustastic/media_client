@@ -1,16 +1,32 @@
 use colored::Colorize;
 use log::error;
-use messages::client_commands::MediaClientEvent::{
-    DestinationIsDrone, ErrorPacketCache, UnreachableNode,
-};
-use wg_2024::{
-    network::NodeId,
-    packet::{Nack, Packet},
-};
+use wg_2024::{network::NodeId, packet::{Nack, Packet}};
+use messages::client_commands::MediaClientEvent::{DestinationIsDrone, ErrorPacketCache, UnreachableNode};
 
 use super::MediaClient;
 
 impl MediaClient {
+    pub fn handle_packet(&mut self, packet: Packet) {
+        match packet.pack_type {
+            wg_2024::packet::PacketType::MsgFragment(fragment) => {
+                self.message_factory.received_fragment(
+                    fragment,
+                    packet.session_id,
+                    packet.routing_header.hops[0],
+                );
+            }
+            wg_2024::packet::PacketType::Ack(ack) => {
+                // self.message_factory.received_ack(ack, packet.session_id);
+                self.packet_cache
+                    .take_packet((packet.session_id, ack.fragment_index));
+            }
+            wg_2024::packet::PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
+            wg_2024::packet::PacketType::FloodRequest(_flood_request) => todo!(),
+            wg_2024::packet::PacketType::FloodResponse(_flood_response) => todo!(),
+        }
+
+        todo!()
+    }
     #[allow(clippy::needless_pass_by_value)] //want to consume the nack
     pub fn handle_nack(&mut self, nack: Nack, session_id: u64) {
         match nack.nack_type {
