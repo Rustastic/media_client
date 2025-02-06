@@ -21,20 +21,18 @@ impl MediaClient {
             .ok();
     }
     /// Used to send packet
-    /// 
+    ///
     /// # Arguments
     /// -  `sender` : to be included only if  `msg`  is of type  `FloodRequest` otherwise it will be ignored
-    pub fn send_packet(&self, msg: Packet, sender: Option<&Sender<Packet>> ) {
+    pub fn send_packet(&self, msg: Packet, sender: Option<&Sender<Packet>>) {
         match msg.pack_type {
-            wg_2024::packet::PacketType::Ack(_) 
-            | wg_2024::packet::PacketType::Nack(_) 
+            wg_2024::packet::PacketType::Ack(_)
+            | wg_2024::packet::PacketType::Nack(_)
             | wg_2024::packet::PacketType::FloodResponse(_) => self.send_or_shortcut(msg),
             wg_2024::packet::PacketType::FloodRequest(_) => {
-                let Some(sender) = sender else {
-                    return
-                } ;
-                self.send_to_sender(msg, sender) ;
-            },
+                let Some(sender) = sender else { return };
+                self.send_to_sender(msg, sender);
+            }
             wg_2024::packet::PacketType::MsgFragment(_) => {
                 let Some(dest) = msg.routing_header.next_hop() else {
                     error!(
@@ -45,9 +43,8 @@ impl MediaClient {
                     return;
                 };
                 self.send_to_neighbour_id(msg, dest);
-            },
+            }
         }
-
     }
     fn send_to_sender(&self, msg: Packet, sender: &Sender<Packet>) {
         info!("{} [MediaClient {}] sending packet", "✓".green(), self.id);

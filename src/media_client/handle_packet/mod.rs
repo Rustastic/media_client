@@ -5,7 +5,7 @@ use messages::client_commands::MediaClientEvent::{
 };
 use wg_2024::{
     network::{NodeId, SourceRoutingHeader},
-    packet::{FloodRequest, FloodResponse, Nack, NackType, NodeType, Packet},
+    packet::{Ack, FloodRequest, FloodResponse, Nack, NackType, NodeType, Packet},
 };
 
 use super::MediaClient;
@@ -13,12 +13,12 @@ use super::MediaClient;
 #[cfg(test)]
 mod test;
 
-
 impl MediaClient {
     pub fn handle_packet(&mut self, packet: Packet) {
         match packet.pack_type {
             wg_2024::packet::PacketType::MsgFragment(ref fragment) => {
                 if self.check_packet(&packet, Some(fragment.fragment_index)) {
+                    self.send_ack(fragment.fragment_index, &packet);
                     if let Some(message) = self.message_factory.received_fragment(
                         fragment.clone(),
                         packet.session_id,
@@ -26,19 +26,24 @@ impl MediaClient {
                     ) {
                         self.handle_message(message);
                     }
+                } else {
+                    let nack = Packet::new_nack(packet.routing_header.get_reversed(), packet.session_id, Nack { fragment_index: fragment.fragment_index, nack_type: NackType::UnexpectedRecipient(self.id) });
+                    self.send_packet(nack, None);
                 }
-            }
+            },
             wg_2024::packet::PacketType::Ack(ack) => {
                 // self.message_factory.received_ack(ack, packet.session_id);
                 self.packet_cache
                     .take_packet((packet.session_id, ack.fragment_index));
             }
             wg_2024::packet::PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
-            wg_2024::packet::PacketType::FloodRequest(flood_request) => {
-                let res = self.get_flood_response(flood_request, packet.session_id);
+            wg_2024::packet::PacketType::FloodRequest(request) => {
+                let res = self.get_flood_response(request, packet.session_id);
                 self.send_packet(res, None);
             }
-            wg_2024::packet::PacketType::FloodResponse(_flood_response) => todo!(),
+            wg_2024::packet::PacketType::FloodResponse(response) => {
+                self.router.handle_flood_response(&response);
+            }
         }
 
         todo!()
@@ -151,5 +156,13 @@ impl MediaClient {
             session_id,
             pack_type: wg_2024::packet::PacketType::FloodResponse(flood_response),
         }
+    }
+    fn send_ack(&self, fragment_index: u64, packet: &Packet) {
+        let ack = Packet {
+            routing_header: packet.routing_header.get_reversed(),
+            session_id: packet.session_id,
+            pack_type: wg_2024::packet::PacketType::Ack(Ack { fragment_index }),
+        };
+        self.send_packet(ack, None);
     }
 }
