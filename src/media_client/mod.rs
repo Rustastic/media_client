@@ -1,9 +1,7 @@
 use std::{collections::HashMap, thread, time::Duration};
 
 use assembler::HighLevelMessageFactory;
-use messages::
-    client_commands::{MediaClientCommand, MediaClientEvent}
-;
+use messages::client_commands::{MediaClientCommand, MediaClientEvent};
 use packet_cache::PacketCache;
 use source_routing::Router;
 
@@ -15,9 +13,11 @@ use wg_2024::{
     packet::{NodeType, Packet},
 };
 
-mod packet_cache;
 mod handle_command;
+mod handle_message;
 mod handle_packet;
+
+mod packet_cache;
 
 struct MediaClient {
     id: NodeId,
@@ -94,6 +94,7 @@ impl MediaClient {
         self.send_to_neighbour_id(msg, dest);
     }
     fn send_to_sender(&self, msg: Packet, sender: &Sender<Packet>) {
+        info!("{} [MediaClient {}] sending packet", "✓".green(), self.id);
         sender
             .send(msg)
             .inspect_err(|e| {
@@ -119,6 +120,20 @@ impl MediaClient {
             return;
         };
         self.send_to_sender(msg, sender);
+    }
+    /// To be used only with `Ack`, `Nack` and `FloodResponse`
+    fn send_or_shortcut(&self, msg: Packet) {
+        fn get_sender(this: &MediaClient, packet: &Packet) -> Option<Sender<Packet>> {
+            Some(
+                this.packet_send
+                    .get(&packet.routing_header.next_hop()?)?
+                    .clone(),
+            )
+        }
+        match get_sender(self, &msg) {
+            Some(sender) => self.send_to_sender(msg, &sender),
+            None => self.send_controller(MediaClientEvent::ControllerShortcut(msg)),
+        }
     }
     fn reinit_network(&mut self) {
         info!(

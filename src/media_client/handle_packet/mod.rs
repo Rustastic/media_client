@@ -1,19 +1,32 @@
 use colored::Colorize;
 use log::error;
-use wg_2024::{network::NodeId, packet::{Nack, Packet}};
-use messages::client_commands::MediaClientEvent::{DestinationIsDrone, ErrorPacketCache, UnreachableNode};
+use messages::client_commands::MediaClientEvent::{
+    DestinationIsDrone, ErrorPacketCache, UnreachableNode,
+};
+use wg_2024::{
+    network::{NodeId, SourceRoutingHeader},
+    packet::{FloodRequest, FloodResponse, Nack, NackType, NodeType, Packet},
+};
 
 use super::MediaClient;
+
+#[cfg(test)]
+mod test;
+
 
 impl MediaClient {
     pub fn handle_packet(&mut self, packet: Packet) {
         match packet.pack_type {
-            wg_2024::packet::PacketType::MsgFragment(fragment) => {
-                self.message_factory.received_fragment(
-                    fragment,
-                    packet.session_id,
-                    packet.routing_header.hops[0],
-                );
+            wg_2024::packet::PacketType::MsgFragment(ref fragment) => {
+                if self.check_packet(&packet, Some(fragment.fragment_index)) {
+                    if let Some(message) = self.message_factory.received_fragment(
+                        fragment.clone(),
+                        packet.session_id,
+                        packet.routing_header.hops[0],
+                    ) {
+                        self.handle_message(message);
+                    }
+                }
             }
             wg_2024::packet::PacketType::Ack(ack) => {
                 // self.message_factory.received_ack(ack, packet.session_id);
@@ -21,7 +34,10 @@ impl MediaClient {
                     .take_packet((packet.session_id, ack.fragment_index));
             }
             wg_2024::packet::PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
-            wg_2024::packet::PacketType::FloodRequest(_flood_request) => todo!(),
+            wg_2024::packet::PacketType::FloodRequest(flood_request) => {
+                let res = self.get_flood_response(flood_request, packet.session_id);
+                self.send_or_shortcut(res);
+            }
             wg_2024::packet::PacketType::FloodResponse(_flood_response) => todo!(),
         }
 
@@ -103,5 +119,37 @@ impl MediaClient {
             packet = new_packet;
         }
         self.send_packet(packet);
+    }
+    fn check_packet(&self, packet: &Packet, fragment_index: Option<u64>) -> bool {
+        let hop_index = packet.routing_header.hop_index;
+        if self.id != packet.routing_header.hops[hop_index] {
+            let nack_packet = Packet {
+                routing_header: packet.routing_header.get_reversed(),
+                pack_type: wg_2024::packet::PacketType::Nack(Nack {
+                    fragment_index: fragment_index.unwrap_or(0),
+                    nack_type: NackType::UnexpectedRecipient(self.id),
+                }),
+                ..packet.clone()
+            };
+            self.send_or_shortcut(nack_packet);
+            return false;
+        }
+        true
+    }
+    fn get_flood_response(&self, flood_request: FloodRequest, session_id: u64) -> Packet {
+        let mut path_trace = flood_request.path_trace;
+        path_trace.push((self.id, NodeType::Client));
+        let mut hops = path_trace.iter().map(|(id, _)| *id).collect::<Vec<u8>>();
+        hops.reverse();
+        hops.push(flood_request.initiator_id);
+        let flood_response = FloodResponse {
+            flood_id: flood_request.flood_id,
+            path_trace,
+        };
+        Packet {
+            routing_header: SourceRoutingHeader::with_first_hop(hops),
+            session_id,
+            pack_type: wg_2024::packet::PacketType::FloodResponse(flood_response),
+        }
     }
 }

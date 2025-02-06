@@ -1,8 +1,11 @@
 use colored::Colorize;
 use log::{error, warn};
-use messages::{client_commands::{MediaClientCommand, MediaClientEvent}, high_level_messages::ClientMessage};
-use wg_2024::network::NodeId;
 use messages::high_level_messages::MessageContent::FromClient;
+use messages::{
+    client_commands::{MediaClientCommand, MediaClientEvent},
+    high_level_messages::ClientMessage,
+};
+use wg_2024::network::NodeId;
 
 use super::MediaClient;
 
