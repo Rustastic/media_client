@@ -1,19 +1,19 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, thread, time::Duration};
 
 use assembler::HighLevelMessageFactory;
 use messages::{
     client_commands::{MediaClientCommand, MediaClientEvent},
     high_level_messages::{ClientMessage, MessageContent::FromClient},
 };
-use packet_cache::{Key, PacketCache};
+use packet_cache::PacketCache;
 use source_routing::Router;
 
 use colored::Colorize;
 use crossbeam_channel::{select_biased, Receiver, Sender};
-use log::{error, warn};
+use log::{error, info, warn};
 use wg_2024::{
     network::NodeId,
-    packet::{self, NodeType, Packet},
+    packet::{NodeType, Packet},
 };
 
 mod handle_nack;
@@ -112,7 +112,7 @@ impl MediaClient {
         let Some(sender) = self.packet_send.get(&neighbour_id) else {
             self.send_controller(MediaClientEvent::UnreachableNode(neighbour_id));
             error!(
-                "{} [ ChatClient {} ]: Cannot send message, destination {neighbour_id} is unreachable",
+                "{} [ MediaClient {} ]: Cannot send message, destination {neighbour_id} is unreachable",
                 "✗".red(),
                 self.id,
             );
@@ -122,13 +122,7 @@ impl MediaClient {
     }
     fn handle_command(&mut self, command: MediaClientCommand) {
         match command {
-            MediaClientCommand::InitFlooding => {
-                for sender in self.packet_send.values() {
-                    //TODO: maybe network.clear()
-                    let req = self.router.get_flood_request();
-                    self.send_to_sender(req, sender);
-                }
-            }
+            MediaClientCommand::InitFlooding => self.flood_network(),
             MediaClientCommand::RemoveSender(id) => {
                 let _ = self
                     .packet_send
@@ -139,7 +133,7 @@ impl MediaClient {
                     .ok_or(())
                     .inspect_err(|()| {
                         warn!(
-                            "{} [ ChatClient {} ] is already disconnected from [ Drone {id} ]",
+                            "{} [ MediaClient {} ] is already disconnected from [ Drone {id} ]",
                             "!!!".yellow(),
                             self.id
                         );
@@ -151,7 +145,7 @@ impl MediaClient {
                     self.send_controller(MediaClientEvent::AddedSender(id));
                 } else {
                     warn!(
-                        "{} [ ChatClient {} ] is already connected to [ Drone {id} ]",
+                        "{} [ MediaClient {} ] is already connected to [ Drone {id} ]",
                         "!!!".yellow(),
                         self.id
                     );
@@ -174,7 +168,8 @@ impl MediaClient {
             }
             wg_2024::packet::PacketType::Ack(ack) => {
                 // self.message_factory.received_ack(ack, packet.session_id);
-                self.packet_cache.take_packet((packet.session_id, ack.fragment_index)) ;
+                self.packet_cache
+                    .take_packet((packet.session_id, ack.fragment_index));
             }
             wg_2024::packet::PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
             wg_2024::packet::PacketType::FloodRequest(_flood_request) => todo!(),
@@ -187,7 +182,7 @@ impl MediaClient {
         let Ok(header) = self.router.get_source_routing_header(destination) else {
             self.send_controller(MediaClientEvent::UnreachableNode(destination));
             error!(
-                "{} [ ChatClient {} ]: Cannot send message, destination {destination} is unreachable",
+                "{} [ MediaClient {} ]: Cannot send message, destination {destination} is unreachable",
                 "✗".red(),
                 self.id,
             );
@@ -198,7 +193,7 @@ impl MediaClient {
                 header.next_hop().unwrap_or(destination),
             ));
             error!(
-                "{} [ ChatClient {} ]: Cannot send message, destination {destination} is unreachable",
+                "{} [ MediaClient {} ]: Cannot send message, destination {destination} is unreachable",
                 "✗".red(),
                 self.id,
             );
@@ -219,6 +214,22 @@ impl MediaClient {
             self.packet_cache.insert_packet(&fragment_packet);
             self.send_to_sender(fragment_packet, sender);
         }
+    }
+    fn reinit_network(&mut self) {
+        info!(
+            "{} [ Mediaclient {} ]: reinitializing the network...",
+            "✓".green(),
+            self.id
+        );
+        self.router.clear_routing_table();
+        self.flood_network();
+    }
+    fn flood_network(&self) {
+        for sender in self.packet_send.values() {
+            let req = self.router.get_flood_request();
+            self.send_to_sender(req, sender);
+        }
+        thread::sleep(Duration::from_millis(10));
     }
 }
 
