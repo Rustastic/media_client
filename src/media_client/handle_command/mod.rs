@@ -57,17 +57,6 @@ impl MediaClient {
             );
             return;
         };
-        let Some(sender) = self.packet_send.get(&header.next_hop().unwrap_or(self.id)) else {
-            self.send_controller(MediaClientEvent::UnreachableNode(
-                header.next_hop().unwrap_or(destination),
-            ));
-            error!(
-                "{} [ MediaClient {} ]: Cannot send message, destination {destination} is unreachable",
-                "✗".red(),
-                self.id,
-            );
-            return;
-        };
         let client_message = match command {
             MediaClientCommand::AskServerType(_) => ClientMessage::GetServerType,
             MediaClientCommand::AskFilesList(_) => ClientMessage::GetFilesList,
@@ -81,7 +70,8 @@ impl MediaClient {
             destination,
         ) {
             self.packet_cache.insert_packet(&fragment_packet);
-            self.send_to_sender(fragment_packet, sender);
+            // self.send_to_sender(fragment_packet, sender);
+            self.send_packet(fragment_packet, None);
         }
     }
 }

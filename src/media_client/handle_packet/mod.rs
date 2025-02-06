@@ -36,7 +36,7 @@ impl MediaClient {
             wg_2024::packet::PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
             wg_2024::packet::PacketType::FloodRequest(flood_request) => {
                 let res = self.get_flood_response(flood_request, packet.session_id);
-                self.send_or_shortcut(res);
+                self.send_packet(res, None);
             }
             wg_2024::packet::PacketType::FloodResponse(_flood_response) => todo!(),
         }
@@ -118,7 +118,7 @@ impl MediaClient {
             };
             packet = new_packet;
         }
-        self.send_packet(packet);
+        self.send_packet(packet, None);
     }
     fn check_packet(&self, packet: &Packet, fragment_index: Option<u64>) -> bool {
         let hop_index = packet.routing_header.hop_index;
@@ -131,7 +131,7 @@ impl MediaClient {
                 }),
                 ..packet.clone()
             };
-            self.send_or_shortcut(nack_packet);
+            self.send_packet(nack_packet, None);
             return false;
         }
         true
