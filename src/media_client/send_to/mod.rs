@@ -76,16 +76,23 @@ impl MediaClient {
     }
     /// To be used only with `Ack`, `Nack` and `FloodResponse`
     fn send_or_shortcut(&self, msg: Packet) {
-        fn get_sender(this: &MediaClient, packet: &Packet) -> Option<Sender<Packet>> {
-            Some(
-                this.packet_send
-                    .get(&packet.routing_header.next_hop()?)?
-                    .clone(),
-            )
-        }
-        match get_sender(self, &msg) {
-            Some(sender) => self.send_to_sender(msg, &sender),
+        match self.get_sender(&msg) {
+            Some(sender) => {
+                sender
+                    .send(msg)
+                    .inspect_err(|e| {
+                        self.send_controller(MediaClientEvent::ControllerShortcut(e.0.clone()));
+                    })
+                    .ok();
+            }
             None => self.send_controller(MediaClientEvent::ControllerShortcut(msg)),
         }
+    }
+    fn get_sender(&self, packet: &Packet) -> Option<Sender<Packet>> {
+        Some(
+            self.packet_send
+                .get(&packet.routing_header.next_hop()?)?
+                .clone(),
+        )
     }
 }

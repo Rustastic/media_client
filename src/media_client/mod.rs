@@ -3,6 +3,7 @@ use std::{collections::HashMap, thread, time::Duration};
 use assembler::HighLevelMessageFactory;
 use messages::client_commands::{MediaClientCommand, MediaClientEvent};
 use packet_cache::PacketCache;
+use servers::KnownServers;
 use source_routing::Router;
 
 use colored::Colorize;
@@ -19,7 +20,7 @@ mod handle_packet;
 mod send_to;
 
 mod packet_cache;
-mod discovered_server;
+mod servers;
 
 struct MediaClient {
     id: NodeId,
@@ -28,6 +29,7 @@ struct MediaClient {
     message_factory: HighLevelMessageFactory,
 
     packet_cache: PacketCache,
+    discovered_servers: KnownServers,
 
     controller_send: Sender<MediaClientEvent>,
     controller_recv: Receiver<MediaClientCommand>,
@@ -50,6 +52,7 @@ impl MediaClient {
             router: Router::new(id, NodeType::Client),
             message_factory: HighLevelMessageFactory::new(id, NodeType::Client),
             packet_cache: PacketCache::new(),
+            discovered_servers: KnownServers::new(),
             controller_send,
             controller_recv,
             packet_recv,
@@ -92,4 +95,12 @@ impl MediaClient {
         }
         thread::sleep(Duration::from_millis(10));
     }
+    // fn get_discovered_server(&self, id: NodeId) -> Option<&DiscoveredServer> {
+    //     let index = self.discovered_servers.iter().position(|s| s.id == id)?;
+    //     self.discovered_servers.get(index)
+    // }
+    // fn get_discovered_server_mut(&mut self, id: NodeId) -> Option<&mut DiscoveredServer> {
+    //     let index = self.discovered_servers.iter().position(|s| s.id == id)?;
+    //     self.discovered_servers.get_mut(index)
+    // }
 }

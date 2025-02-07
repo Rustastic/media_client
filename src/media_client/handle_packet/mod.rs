@@ -27,10 +27,17 @@ impl MediaClient {
                         self.handle_message(message);
                     }
                 } else {
-                    let nack = Packet::new_nack(packet.routing_header.get_reversed(), packet.session_id, Nack { fragment_index: fragment.fragment_index, nack_type: NackType::UnexpectedRecipient(self.id) });
+                    let nack = Packet::new_nack(
+                        packet.routing_header.get_reversed(),
+                        packet.session_id,
+                        Nack {
+                            fragment_index: fragment.fragment_index,
+                            nack_type: NackType::UnexpectedRecipient(self.id),
+                        },
+                    );
                     self.send_packet(nack, None);
                 }
-            },
+            }
             wg_2024::packet::PacketType::Ack(ack) => {
                 // self.message_factory.received_ack(ack, packet.session_id);
                 self.packet_cache
