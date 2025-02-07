@@ -43,7 +43,6 @@ impl MediaClient {
             }
             MediaClientCommand::AskServerType(id)
             | MediaClientCommand::AskFilesList(id)
-            | MediaClientCommand::AskForMedia(id, _)
             | MediaClientCommand::AskForFile(id, _) => self.handle_ask(id, command),
         }
     }
@@ -61,7 +60,6 @@ impl MediaClient {
             MediaClientCommand::AskServerType(_) => ClientMessage::GetServerType,
             MediaClientCommand::AskFilesList(_) => ClientMessage::GetFilesList,
             MediaClientCommand::AskForFile(_, file_id) => ClientMessage::GetFile(file_id),
-            MediaClientCommand::AskForMedia(_, media_id) => ClientMessage::GetMedia(media_id),
             _ => return,
         };
         for fragment_packet in self.message_factory.get_message_from_message_content(

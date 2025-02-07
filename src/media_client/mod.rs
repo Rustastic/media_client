@@ -19,6 +19,7 @@ mod handle_packet;
 mod send_to;
 
 mod packet_cache;
+mod discovered_server;
 
 struct MediaClient {
     id: NodeId,
@@ -92,5 +93,3 @@ impl MediaClient {
         thread::sleep(Duration::from_millis(10));
     }
 }
-
-impl MediaClient {}
