@@ -64,6 +64,7 @@ impl MediaClient {
 impl MediaClient {
     //methods
     pub fn run(&mut self) {
+        self.flood_network();
         loop {
             select_biased! {
                 recv(self.controller_recv) -> command => {

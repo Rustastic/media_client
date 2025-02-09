@@ -147,7 +147,7 @@ impl TextFile {
 }
 
 ///get `media_ref` from 
-/// <img href="`node_id, media_id`"
+/// <img href="`node_id media_id`"
 fn search_ref(file: &str) -> Option<Vec<FileKey>> {
     let dom = Dom::parse(file).ok()?;
     let iter = dom.children.first()?.into_iter();
