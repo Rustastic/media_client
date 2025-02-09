@@ -155,7 +155,10 @@ fn search_ref(file: &str) -> Option<Vec<FileKey>> {
         Node::Element(ref element) if element.name == "img" => element.attributes["href"].clone(),
         _ => None,
     });
-    // imgs.for_each(|reff| reff.split_whitespace());
+    imgs.for_each(|reff| {
+        let split: Vec<&str> = reff.split_whitespace()
+            .collect();
+    });
 
 
     todo!()

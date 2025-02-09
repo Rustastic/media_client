@@ -52,8 +52,6 @@ impl MediaClient {
                 self.router.handle_flood_response(&response);
             }
         }
-
-        todo!()
     }
     #[allow(clippy::needless_pass_by_value)] //want to consume the nack
     pub fn handle_nack(&mut self, nack: Nack, session_id: u64) {
