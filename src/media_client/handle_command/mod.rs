@@ -8,7 +8,6 @@ use messages::{
 use wg_2024::network::NodeId;
 
 use super::MediaClient;
-use crate::media_client::DiscoveredServer;
 
 impl MediaClient {
     pub fn handle_command(&mut self, command: MediaClientCommand) {
@@ -48,10 +47,6 @@ impl MediaClient {
                     .get_server_list()
                     .into_iter()
                     .collect::<Vec<NodeId>>();
-                for &server_id in &server_list {
-                    let discovered_server = DiscoveredServer::new(server_id);
-                    self.discovered_servers.push(discovered_server);
-                }
                 self.send_controller(MediaClientEvent::ServerList(server_list));
             }
             MediaClientCommand::AskServerType(id)

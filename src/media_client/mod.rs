@@ -1,9 +1,9 @@
 use std::{collections::HashMap, thread, time::Duration};
 
 use assembler::HighLevelMessageFactory;
+use file_assembler::FileAssembler;
 use messages::client_commands::{MediaClientCommand, MediaClientEvent};
 use packet_cache::PacketCache;
-use servers::KnownServers;
 use source_routing::Router;
 
 use colored::Colorize;
@@ -20,7 +20,7 @@ mod handle_packet;
 mod send_to;
 
 mod packet_cache;
-mod servers;
+mod file_assembler;
 
 struct MediaClient {
     id: NodeId,
@@ -29,7 +29,7 @@ struct MediaClient {
     message_factory: HighLevelMessageFactory,
 
     packet_cache: PacketCache,
-    discovered_servers: KnownServers,
+    file_assembler: FileAssembler,
 
     controller_send: Sender<MediaClientEvent>,
     controller_recv: Receiver<MediaClientCommand>,
@@ -52,7 +52,7 @@ impl MediaClient {
             router: Router::new(id, NodeType::Client),
             message_factory: HighLevelMessageFactory::new(id, NodeType::Client),
             packet_cache: PacketCache::new(),
-            discovered_servers: KnownServers::new(),
+            file_assembler: FileAssembler::new(),
             controller_send,
             controller_recv,
             packet_recv,
