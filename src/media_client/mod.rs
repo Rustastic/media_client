@@ -22,7 +22,7 @@ mod send_to;
 mod packet_cache;
 mod file_assembler;
 
-struct MediaClient {
+pub struct MediaClient {
     id: NodeId,
 
     router: Router,
