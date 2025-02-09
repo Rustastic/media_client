@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use html_parser::{Dom, Node};
 use wg_2024::network::NodeId;
 
 /// `(source_id, file_id)`
@@ -143,4 +144,19 @@ impl TextFile {
             media_ref,
         )
     }
+}
+
+///get `media_ref` from 
+/// <img href="`node_id, media_id`"
+fn search_ref(file: &str) -> Option<Vec<FileKey>> {
+    let dom = Dom::parse(file).ok()?;
+    let iter = dom.children.first()?.into_iter();
+    let imgs = iter.filter_map(|item| match item {
+        Node::Element(ref element) if element.name == "img" => element.attributes["href"].clone(),
+        _ => None,
+    });
+    // imgs.for_each(|reff| reff.split_whitespace());
+
+
+    todo!()
 }
