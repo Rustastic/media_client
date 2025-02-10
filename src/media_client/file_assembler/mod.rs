@@ -1,10 +1,12 @@
 use std::{
     collections::HashMap,
     fs::{self, File},
-    io::{stderr, stdout, Write},
+    io::{Cursor, Write},
 };
 
+use base64::{engine::general_purpose, Engine};
 use html_parser::{Dom, Node};
+use image::{codecs::jpeg::JpegDecoder, DynamicImage};
 use wg_2024::network::NodeId;
 
 /// `(source_id, file_id)`
@@ -12,7 +14,7 @@ use wg_2024::network::NodeId;
 /// media file have not `source_id`
 type FileKey = (Option<NodeId>, String);
 
-type MediaContent = Vec<u8>;
+type MediaContent = String;
 
 pub enum AddedFileReturn {
     CompleteFile {
@@ -57,11 +59,11 @@ impl FileAssembler {
         );
         Some(media_ref)
     }
-    pub fn add_media_file(&mut self, file_id: &str, content: Vec<u8>) -> Option<AddedFileReturn> {
+    pub fn add_media_file(&mut self, file_id: &str, content: String) -> Option<AddedFileReturn> {
         self.files
             .insert((None, file_id.to_owned()), FileType::MediaFile { content });
         if let Some(file) = self.check_and_take_complete_file() {
-            // display_file(file);
+            display_file(file);
         }
         None
     }
@@ -129,7 +131,7 @@ impl FileAssembler {
 
 enum FileType {
     TextFile(TextFile),
-    MediaFile { content: Vec<u8> },
+    MediaFile { content: MediaContent },
 }
 
 struct TextFile {
@@ -166,7 +168,7 @@ fn search_ref(file: &str) -> Option<Vec<FileKey>> {
         .into_iter()
         .filter_map(|item| match item {
             Node::Element(ref element) if element.name == "img" => {
-                Some((None, element.attributes["media_id"].clone()?))
+                Some((None, element.attributes["src"].clone()?))
             }
             _ => None,
         })
@@ -174,62 +176,72 @@ fn search_ref(file: &str) -> Option<Vec<FileKey>> {
     Some(media_ref)
 }
 
-// fn display_file(file: AddedFileReturn) {
-//     if let AddedFileReturn::CompleteFile {
-//         source_id,
-//         file_id,
-//         content,
-//         media_content,
-//     } = file
-//     {
-//         let _join = std::thread::spawn(move || {
-//             stdout().flush();
-//             stderr().flush();
-//             let Ok(current_dir) = std::env::current_dir() else {
-//                 return;
-//             };
-//             // let a = Instant::now();
-//             let dir_path =  current_dir.join(format!("{source_id}_{file_id}"));
-//             println!("dir_path: {}", dir_path.display());
-//             stdout().flush();
-//             let _ = fs::create_dir(&dir_path);
-//             let file_path = dir_path.join(file_id);
-//             println!("file_path: {}", file_path.display());
+fn display_file(file: AddedFileReturn) {
+    if let AddedFileReturn::CompleteFile {
+        source_id,
+        file_id,
+        content,
+        media_content,
+    } = file
+    {
+        let Ok(current_dir) = std::env::current_dir() else {
+            return;
+        };
+        // let a = Instant::now();
+        let dir_path =  current_dir.join(format!("{source_id}_{file_id}"));
+        let _ = fs::create_dir(&dir_path);
+        let file_path = dir_path.join(file_id);
+        println!("file_path: {}", file_path.display());
 
-//             if let Ok(mut text_file) = File::create(file_path.clone()).inspect_err(|e|{
-//                 println!("error: {e}");
-//             }) {
-//                 let error = write!(text_file, "{content}");
-//                 let _ = text_file.flush();
-//                 println!("error: {error:?} \n");
-//                 stdout().flush();
-//                 for (media_id, m_content) in media_content {
-//                     let dynimage = image::load_from_memory(&m_content).unwrap();
-//                     let a = Image::load_from_memory;
-//                     dynimage.save(dir_path.join(media_id));
-//                 }
-//             } else {
-//                 println!("error_creating text file");
-//             };
-//             while webbrowser::open(file_path.to_str().unwrap()).is_ok() {
-//             }
-            
-//         });
-//     }
-// }
+        if let Ok(mut text_file) = File::create(file_path.clone()).inspect_err(|e|{
+            println!("error: {e}");
+        }) {
+            let _ = write!(text_file, "{content}");
+            let _ = text_file.flush();
+            for (media_id, m_content) in media_content {
+                if let Some(image) = get_dynimage_from_string(m_content) {
+                    let _ = image.save(dir_path.join(media_id));
+                } ;
+            }
+        } else {
+            println!("error_creating text file");
+        };
+        let _ = webbrowser::open(file_path.to_str().unwrap_or_default());
+    }
+}
 
+fn get_dynimage_from_string(base_64: String) -> Option<DynamicImage> {
+    let file_media_content = general_purpose::STANDARD.decode(base_64).ok()?;
+    let cursor = Cursor::new(file_media_content);
+    let decoder = JpegDecoder::new(cursor).ok()? ;
+    DynamicImage::from_decoder(decoder).ok()
+}
 
 // #[cfg(test)]
 // #[test]
 // fn test_display_file() {
+//     use base64::{Engine as _, engine::general_purpose};
 //     use image::ImageReader;
-    
+
 //     let text_content = std::fs::read_to_string(r"C:\__git\Servers\src\servers\text_files\file2.html").unwrap();
-//     let file_media_content = ImageReader::open(r"C:\__git\Servers\src\servers\data_files\media2.jpg").unwrap().decode().unwrap().into_bytes();
-//     let dynimage = image::load_from_memory(&file_media_content).unwrap();
-//     let mut media_content = HashMap::new();
-//     media_content.insert("media2.jpg".to_string(), file_media_content);
-//     let complete_file = AddedFileReturn::CompleteFile { source_id: 2, file_id: "text.html".to_string(), content: text_content, media_content };
-//     display_file(complete_file);
+//     let file_media_content = ImageReader::open(r"C:\__git\Servers\src\servers\data_files\media2.jpg").unwrap().decode().unwrap();
+//     let mut buf = Vec::new();
+//     file_media_content.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Jpeg);
+//     let base_64 = general_purpose::STANDARD.encode(&buf);
+
+//     test_args(base_64);
+
+//     // let mut media_content = HashMap::new();
+//     // media_content.insert("media2.jpg".to_string(), file_media_content);
+//     // let complete_file = AddedFileReturn::CompleteFile { source_id: 2, file_id: "text.html".to_string(), content: text_content, media_content };
+//     // display_file(complete_file);
 //     // println!("{:?}", std::env::current_dir());
+// }
+
+// fn test_args( base_64: String ) {
+//     let file_media_content = general_purpose::STANDARD.decode(base_64).unwrap();
+//     let cursor = Cursor::new(file_media_content);
+//     let decoder = JpegDecoder::new(cursor) ;
+//     let image = DynamicImage::from_decoder(decoder.unwrap()).unwrap();
+//     image.save(r"C:\__git\media_client\0_text.html\media1.jpg");
 // }
