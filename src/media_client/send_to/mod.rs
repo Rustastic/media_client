@@ -36,12 +36,17 @@ impl MediaClient {
             wg_2024::packet::PacketType::MsgFragment(_) => {
                 let Some(dest) = msg.routing_header.current_hop() else {
                     error!(
-                        "{} [MediaClienet {}] error taking next_hop",
+                        "{} [MediaClient {}] error taking next_hop",
                         "✗".red(),
                         self.id
                     );
                     return;
                 };
+                info!(
+                    "{} [MediaClient {}] sending packet to neighbour {dest}",
+                    "✓".green(),
+                    self.id
+                );
                 self.send_to_neighbour_id(msg, dest);
             }
         }

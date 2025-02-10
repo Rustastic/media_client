@@ -32,6 +32,7 @@ impl MediaClient {
                 self.send_controller(
                     messages::client_commands::MediaClientEvent::ReceveidFileList(
                         message.source_id,
+                        self.id,
                         files_ids,
                     ),
                 );
