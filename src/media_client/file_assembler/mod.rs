@@ -203,7 +203,7 @@ fn display_file(file: AddedFileReturn) {
 }
 
 
-
+#[cfg(test)]
 #[test]
 fn test_display_file() {
     let complete_file = AddedFileReturn::CompleteFile { source_id: 0, file_id: "text.html", content: (), media_content: () }
