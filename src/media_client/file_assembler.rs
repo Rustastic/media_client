@@ -188,11 +188,11 @@ fn display_file(file: AddedFileReturn) {
         let Ok(current_dir) = std::env::current_dir() else {
             return;
         };
-        let a = SystemTime::now()
+        let istant: u64 = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
-        let dir_path = current_dir.join(format!("/browser/{source_id}_{file_id}_{a}",));
+        let dir_path = current_dir.join(format!("/browser/{source_id}_{file_id}_{istant}"));
         let _ = fs::create_dir(&dir_path);
         let file_path = dir_path.join(file_id);
 

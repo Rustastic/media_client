@@ -7,8 +7,8 @@ use std::{
 use assembler::HighLevelMessageFactory;
 use file_assembler::FileAssembler;
 use messages::client_commands::{MediaClientCommand, MediaClientEvent};
-use packet_cache::PacketCache;
 use source_routing::Router;
+use packet_cache::PacketCache;
 
 use colored::Colorize;
 use crossbeam_channel::{select_biased, Receiver, Sender};
@@ -24,7 +24,6 @@ mod handle_packet;
 mod send_to;
 
 mod file_assembler;
-mod packet_cache;
 
 pub struct MediaClient {
     id: NodeId,

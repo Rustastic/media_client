@@ -15,3 +15,4 @@ html_parser = "=0.7.0"
 webbrowser = "1.0.3"
 image = "0.25.5"
 base64 = "0.22.1"
+packet_cache = { git = "https://github.com/Rustastic/PacketCache.git"}
