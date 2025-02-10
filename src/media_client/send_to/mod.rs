@@ -34,7 +34,7 @@ impl MediaClient {
                 self.send_to_sender(msg, sender);
             }
             wg_2024::packet::PacketType::MsgFragment(_) => {
-                let Some(dest) = msg.routing_header.next_hop() else {
+                let Some(dest) = msg.routing_header.current_hop() else {
                     error!(
                         "{} [MediaClienet {}] error taking next_hop",
                         "✗".red(),
@@ -92,10 +92,9 @@ impl MediaClient {
         Some(
             self.packet_send
                 .get(
-                    packet
+                    &packet
                         .routing_header
-                        .hops
-                        .get(packet.routing_header.hop_index)?,
+                        .current_hop()?,
                 )?
                 .clone(),
         )
