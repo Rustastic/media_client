@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     fs::{self, File},
-    io::{Cursor, Write},
+    io::{Cursor, Write}, time::{SystemTime, UNIX_EPOCH},
 };
 
 use base64::{engine::general_purpose, Engine};
@@ -156,7 +156,7 @@ impl TextFile {
 }
 
 ///get `media_ref` from
-/// `<img href="media_id">`
+/// `<img src="media_id">`
 ///
 /// # Return
 /// An optional vec of `(None, media_id)`
@@ -187,15 +187,12 @@ fn display_file(file: AddedFileReturn) {
         let Ok(current_dir) = std::env::current_dir() else {
             return;
         };
-        // let a = Instant::now();
-        let dir_path =  current_dir.join(format!("{source_id}_{file_id}"));
+        let a = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+        let dir_path =  current_dir.join(format!("/browser/{source_id}_{file_id}_{a}", ));
         let _ = fs::create_dir(&dir_path);
         let file_path = dir_path.join(file_id);
-        println!("file_path: {}", file_path.display());
 
-        if let Ok(mut text_file) = File::create(file_path.clone()).inspect_err(|e|{
-            println!("error: {e}");
-        }) {
+        if let Ok(mut text_file) = File::create(file_path.clone()) {
             let _ = write!(text_file, "{content}");
             let _ = text_file.flush();
             for (media_id, m_content) in media_content {
@@ -203,9 +200,7 @@ fn display_file(file: AddedFileReturn) {
                     let _ = image.save(dir_path.join(media_id));
                 } ;
             }
-        } else {
-            println!("error_creating text file");
-        };
+        }
         let _ = webbrowser::open(file_path.to_str().unwrap_or_default());
     }
 }
