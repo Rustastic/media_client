@@ -2,7 +2,7 @@ use std::{
     collections::HashMap,
     fs::{self, File},
     io::Write,
-    path::PathBuf,
+    path::PathBuf, time::SystemTime,
 };
 
 use html_parser::{Dom, Node};
@@ -182,7 +182,7 @@ fn display_file(file: AddedFileReturn) {
     } = file
     {
         let _join = std::thread::spawn(move || {
-            let dir_path = PathBuf::from(format!("./{source_id}_{file_id}/"));
+            let dir_path = PathBuf::from(format!("./{source_id}_{file_id}_{:?}/", SystemTime::now()));
             let _ = fs::create_dir(&dir_path);
             let file_path = dir_path.join(file_id);
             if let Ok(mut text_file) = File::create(file_path.clone()) {
@@ -195,7 +195,16 @@ fn display_file(file: AddedFileReturn) {
                     }
                 }
             };
-            while webbrowser::open(file_path.to_str().unwrap_or_default()).is_ok() {}
+            while webbrowser::open(file_path.to_str().unwrap_or_default()).is_ok() {
+            }
+            
         });
     }
+}
+
+
+
+#[test]
+fn test_display_file() {
+    let complete_file = AddedFileReturn::CompleteFile { source_id: 0, file_id: "text.html", content: (), media_content: () }
 }

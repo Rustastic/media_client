@@ -91,7 +91,7 @@ impl MediaClient {
     fn get_sender(&self, packet: &Packet) -> Option<Sender<Packet>> {
         Some(
             self.packet_send
-                .get(&packet.routing_header.next_hop()?)?
+                .get(packet.routing_header.hops.get(packet.routing_header.hop_index)?)?
                 .clone(),
         )
     }
