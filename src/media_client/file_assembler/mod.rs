@@ -1,8 +1,7 @@
 use std::{
     collections::HashMap,
     fs::{self, File},
-    io::Write,
-    path::PathBuf, time::SystemTime,
+    io::{stderr, stdout, Write},
 };
 
 use html_parser::{Dom, Node};
@@ -13,13 +12,15 @@ use wg_2024::network::NodeId;
 /// media file have not `source_id`
 type FileKey = (Option<NodeId>, String);
 
+type MediaContent = Vec<u8>;
+
 pub enum AddedFileReturn {
     CompleteFile {
         source_id: NodeId,
         file_id: String,
         content: String,
         /// `(media_id, content)`
-        media_content: HashMap<String, String>,
+        media_content: HashMap<String, MediaContent>,
     },
     RefToMedia(Vec<FileKey>),
 }
@@ -42,12 +43,12 @@ impl FileAssembler {
     ) -> Option<Vec<FileKey>> {
         let (text_file, media_ref) = TextFile::new_textfile(content, size);
         if media_ref.is_empty() {
-            display_file(AddedFileReturn::CompleteFile {
-                source_id,
-                file_id: file_id.to_owned(),
-                content: text_file.content,
-                media_content: HashMap::new(),
-            });
+            // display_file(AddedFileReturn::CompleteFile {
+            //     source_id,
+            //     file_id: file_id.to_owned(),
+            //     content: text_file.content,
+            //     media_content: HashMap::new(),
+            // });
             return None;
         }
         self.files.insert(
@@ -56,11 +57,11 @@ impl FileAssembler {
         );
         Some(media_ref)
     }
-    pub fn add_media_file(&mut self, file_id: &str, content: String) -> Option<AddedFileReturn> {
+    pub fn add_media_file(&mut self, file_id: &str, content: Vec<u8>) -> Option<AddedFileReturn> {
         self.files
             .insert((None, file_id.to_owned()), FileType::MediaFile { content });
         if let Some(file) = self.check_and_take_complete_file() {
-            display_file(file);
+            // display_file(file);
         }
         None
     }
@@ -128,7 +129,7 @@ impl FileAssembler {
 
 enum FileType {
     TextFile(TextFile),
-    MediaFile { content: String },
+    MediaFile { content: Vec<u8> },
 }
 
 struct TextFile {
@@ -173,38 +174,62 @@ fn search_ref(file: &str) -> Option<Vec<FileKey>> {
     Some(media_ref)
 }
 
-fn display_file(file: AddedFileReturn) {
-    if let AddedFileReturn::CompleteFile {
-        source_id,
-        file_id,
-        content,
-        media_content,
-    } = file
-    {
-        let _join = std::thread::spawn(move || {
-            let dir_path = PathBuf::from(format!("./{source_id}_{file_id}_{:?}/", SystemTime::now()));
-            let _ = fs::create_dir(&dir_path);
-            let file_path = dir_path.join(file_id);
-            if let Ok(mut text_file) = File::create(file_path.clone()) {
-                let _ = write!(text_file, "{content}");
-                let _ = text_file.flush();
-                for (media_id, m_content) in media_content {
-                    if let Ok(mut media_file) = File::create(dir_path.join(media_id)) {
-                        let _ = write!(media_file, "{m_content}");
-                        let _ = media_file.flush();
-                    }
-                }
-            };
-            while webbrowser::open(file_path.to_str().unwrap_or_default()).is_ok() {
-            }
+// fn display_file(file: AddedFileReturn) {
+//     if let AddedFileReturn::CompleteFile {
+//         source_id,
+//         file_id,
+//         content,
+//         media_content,
+//     } = file
+//     {
+//         let _join = std::thread::spawn(move || {
+//             stdout().flush();
+//             stderr().flush();
+//             let Ok(current_dir) = std::env::current_dir() else {
+//                 return;
+//             };
+//             // let a = Instant::now();
+//             let dir_path =  current_dir.join(format!("{source_id}_{file_id}"));
+//             println!("dir_path: {}", dir_path.display());
+//             stdout().flush();
+//             let _ = fs::create_dir(&dir_path);
+//             let file_path = dir_path.join(file_id);
+//             println!("file_path: {}", file_path.display());
+
+//             if let Ok(mut text_file) = File::create(file_path.clone()).inspect_err(|e|{
+//                 println!("error: {e}");
+//             }) {
+//                 let error = write!(text_file, "{content}");
+//                 let _ = text_file.flush();
+//                 println!("error: {error:?} \n");
+//                 stdout().flush();
+//                 for (media_id, m_content) in media_content {
+//                     let dynimage = image::load_from_memory(&m_content).unwrap();
+//                     let a = Image::load_from_memory;
+//                     dynimage.save(dir_path.join(media_id));
+//                 }
+//             } else {
+//                 println!("error_creating text file");
+//             };
+//             while webbrowser::open(file_path.to_str().unwrap()).is_ok() {
+//             }
             
-        });
-    }
-}
+//         });
+//     }
+// }
 
 
 // #[cfg(test)]
 // #[test]
 // fn test_display_file() {
-//     let complete_file = AddedFileReturn::CompleteFile { source_id: 0, file_id: "text.html", content: (), media_content: () }
+//     use image::ImageReader;
+    
+//     let text_content = std::fs::read_to_string(r"C:\__git\Servers\src\servers\text_files\file2.html").unwrap();
+//     let file_media_content = ImageReader::open(r"C:\__git\Servers\src\servers\data_files\media2.jpg").unwrap().decode().unwrap().into_bytes();
+//     let dynimage = image::load_from_memory(&file_media_content).unwrap();
+//     let mut media_content = HashMap::new();
+//     media_content.insert("media2.jpg".to_string(), file_media_content);
+//     let complete_file = AddedFileReturn::CompleteFile { source_id: 2, file_id: "text.html".to_string(), content: text_content, media_content };
+//     display_file(complete_file);
+//     // println!("{:?}", std::env::current_dir());
 // }
