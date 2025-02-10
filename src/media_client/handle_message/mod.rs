@@ -6,8 +6,6 @@ use messages::high_level_messages::{
     ServerType::{Chat, Text},
 };
 
-use crate::media_client::file_assembler::AddedFileReturn::{CompleteFile, RefToMedia};
-
 use super::MediaClient;
 
 impl MediaClient {
@@ -47,13 +45,8 @@ impl MediaClient {
                     .file_assembler
                     .add_textfile(message.source_id, &file_id, content, size)
                 {
-                    CompleteFile {
-                        source_id: _,
-                        file_id: _,
-                        content: _,
-                        media_content: _,
-                    } => todo!("send to sim controller"),
-                    RefToMedia(items) => {
+                    None => (),
+                    Some(items) => {
                         let mut possible_dest = self.media_server.iter().cycle();
                         for (_, file_id) in items {
                             let destination = possible_dest.next().copied().unwrap_or_default();
@@ -75,10 +68,7 @@ impl MediaClient {
                 }
             }
             Media(media_id, content) => {
-                let complete_file = self.file_assembler.add_media_file(&media_id, content);
-                if let Some(_complete_file) = complete_file {
-                    todo!("send to sim controller");
-                }
+                self.file_assembler.add_media_file(&media_id, content);
             }
             _ => (),
         }

@@ -1,4 +1,9 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    fs::{self, File},
+    io::Write,
+    path::PathBuf,
+};
 
 use html_parser::{Dom, Node};
 use wg_2024::network::NodeId;
@@ -34,26 +39,30 @@ impl FileAssembler {
         file_id: &str,
         content: String,
         size: usize,
-    ) -> AddedFileReturn {
+    ) -> Option<Vec<FileKey>> {
         let (text_file, media_ref) = TextFile::new_textfile(content, size);
         if media_ref.is_empty() {
-            return AddedFileReturn::CompleteFile {
+            display_file(AddedFileReturn::CompleteFile {
                 source_id,
                 file_id: file_id.to_owned(),
                 content: text_file.content,
                 media_content: HashMap::new(),
-            };
+            });
+            return None;
         }
         self.files.insert(
             (Some(source_id), file_id.to_owned()),
             FileType::TextFile(text_file),
         );
-        AddedFileReturn::RefToMedia(media_ref)
+        Some(media_ref)
     }
     pub fn add_media_file(&mut self, file_id: &str, content: String) -> Option<AddedFileReturn> {
         self.files
             .insert((None, file_id.to_owned()), FileType::MediaFile { content });
-        self.check_and_take_complete_file()
+        if let Some(file) = self.check_and_take_complete_file() {
+            display_file(file);
+        }
+        None
     }
     fn check_and_take_complete_file(&mut self) -> Option<AddedFileReturn> {
         let mut found_text_key = None;
@@ -162,4 +171,31 @@ fn search_ref(file: &str) -> Option<Vec<FileKey>> {
         })
         .collect::<Vec<FileKey>>();
     Some(media_ref)
+}
+
+fn display_file(file: AddedFileReturn) {
+    if let AddedFileReturn::CompleteFile {
+        source_id,
+        file_id,
+        content,
+        media_content,
+    } = file
+    {
+        let _join = std::thread::spawn(move || {
+            let dir_path = PathBuf::from(format!("./{source_id}_{file_id}/"));
+            let _ = fs::create_dir(&dir_path);
+            let file_path = dir_path.join(file_id);
+            if let Ok(mut text_file) = File::create(file_path.clone()) {
+                let _ = write!(text_file, "{content}");
+                let _ = text_file.flush();
+                for (media_id, m_content) in media_content {
+                    if let Ok(mut media_file) = File::create(dir_path.join(media_id)) {
+                        let _ = write!(media_file, "{m_content}");
+                        let _ = media_file.flush();
+                    }
+                }
+            };
+            while webbrowser::open(file_path.to_str().unwrap_or_default()).is_ok() {}
+        });
+    }
 }
