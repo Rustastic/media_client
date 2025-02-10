@@ -54,17 +54,17 @@ impl MediaClient {
                         media_content: _,
                     } => todo!("send to sim controller"),
                     RefToMedia(items) => {
-                        for (node_id, file_id) in items {
-                            let mut destinations = self.media_server.iter().cycle();
-                            let Ok(header) = self.router.get_source_routing_header(
-                                *destinations.next().unwrap_or(&self.id),
-                            ) else {
+                        let mut possible_dest = self.media_server.iter().cycle();
+                        for (_, file_id) in items {
+                            let destination = possible_dest.next().copied().unwrap_or_default();
+                            let Ok(header) = self.router.get_source_routing_header(destination)
+                            else {
                                 continue;
                             };
                             let message = self.message_factory.get_message_from_message_content(
                                 FromClient(GetMedia(file_id)),
                                 &header,
-                                node_id,
+                                destination,
                             );
                             for fragment in message {
                                 self.packet_cache.insert_packet(&fragment);

@@ -145,7 +145,7 @@ impl TextFile {
 
 ///get `media_ref` from
 /// `<img href="media_id">`
-/// 
+///
 /// # Return
 /// An optional vec of `(None, media_id)`
 fn search_ref(file: &str) -> Option<Vec<FileKey>> {
