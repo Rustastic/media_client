@@ -1,7 +1,8 @@
 use std::{
     collections::HashMap,
     fs::{self, File},
-    io::{Cursor, Write}, time::{SystemTime, UNIX_EPOCH},
+    io::{Cursor, Write},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use base64::{engine::general_purpose, Engine};
@@ -187,8 +188,11 @@ fn display_file(file: AddedFileReturn) {
         let Ok(current_dir) = std::env::current_dir() else {
             return;
         };
-        let a = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
-        let dir_path =  current_dir.join(format!("/browser/{source_id}_{file_id}_{a}", ));
+        let a = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        let dir_path = current_dir.join(format!("/browser/{source_id}_{file_id}_{a}",));
         let _ = fs::create_dir(&dir_path);
         let file_path = dir_path.join(file_id);
 
@@ -198,7 +202,7 @@ fn display_file(file: AddedFileReturn) {
             for (media_id, m_content) in media_content {
                 if let Some(image) = get_dynimage_from_string(m_content) {
                     let _ = image.save(dir_path.join(media_id));
-                } ;
+                };
             }
         }
         let _ = webbrowser::open(file_path.to_str().unwrap_or_default());
@@ -208,7 +212,7 @@ fn display_file(file: AddedFileReturn) {
 fn get_dynimage_from_string(base_64: String) -> Option<DynamicImage> {
     let file_media_content = general_purpose::STANDARD.decode(base_64).ok()?;
     let cursor = Cursor::new(file_media_content);
-    let decoder = JpegDecoder::new(cursor).ok()? ;
+    let decoder = JpegDecoder::new(cursor).ok()?;
     DynamicImage::from_decoder(decoder).ok()
 }
 
