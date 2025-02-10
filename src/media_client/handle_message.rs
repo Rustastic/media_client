@@ -1,3 +1,4 @@
+use log::info;
 use messages::high_level_messages::{
     ClientMessage::GetMedia,
     Message,
@@ -51,6 +52,9 @@ impl MediaClient {
                         let mut possible_dest = self.media_server.iter().cycle();
                         for (_, file_id) in items {
                             let destination = possible_dest.next().copied().unwrap_or_default();
+                            info!(
+                                "[MediaClient: {}] fetching ref: {destination}, {file_id}", self.id
+                            );
                             let Ok(header) = self.router.get_source_routing_header(destination)
                             else {
                                 continue;
