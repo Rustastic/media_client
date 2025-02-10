@@ -4,14 +4,17 @@ use html_parser::{Dom, Node};
 use wg_2024::network::NodeId;
 
 /// `(source_id, file_id)`
-type FileKey = (NodeId, String);
+/// # Note
+/// media file have not `source_id`
+type FileKey = (Option<NodeId>, String);
 
 pub enum AddedFileReturn {
     CompleteFile {
         source_id: NodeId,
         file_id: String,
         content: String,
-        media_content: HashMap<FileKey, String>,
+        /// `(media_id, content)`
+        media_content: HashMap<String, String>,
     },
     RefToMedia(Vec<FileKey>),
 }
@@ -41,20 +44,15 @@ impl FileAssembler {
                 media_content: HashMap::new(),
             };
         }
-        self.files
-            .insert((source_id, file_id.to_owned()), FileType::TextFile(text_file));
+        self.files.insert(
+            (Some(source_id), file_id.to_owned()),
+            FileType::TextFile(text_file),
+        );
         AddedFileReturn::RefToMedia(media_ref)
     }
-    pub fn add_media_file(
-        &mut self,
-        source_id: NodeId,
-        file_id: &str,
-        content: String,
-    ) -> Option<AddedFileReturn> {
-        self.files.insert(
-            (source_id, file_id.to_owned()),
-            FileType::MediaFile { content },
-        );
+    pub fn add_media_file(&mut self, file_id: &str, content: String) -> Option<AddedFileReturn> {
+        self.files
+            .insert((None, file_id.to_owned()), FileType::MediaFile { content });
         self.check_and_take_complete_file()
     }
     fn check_and_take_complete_file(&mut self) -> Option<AddedFileReturn> {
@@ -63,7 +61,7 @@ impl FileAssembler {
             if let FileType::TextFile(text_file) = text_file {
                 let mut completed = true;
                 for media_ref in &text_file.media_ref {
-                    if !self.contains_media_file(media_ref.0, &media_ref.1) {
+                    if !self.contains_media_file(None, &media_ref.1) {
                         completed = false;
                         break;
                     }
@@ -81,7 +79,7 @@ impl FileAssembler {
     }
     fn take_complete_file(
         &mut self,
-        source_id: NodeId,
+        source_id: Option<NodeId>,
         file_id: &str,
     ) -> Option<AddedFileReturn> {
         let text_file = self.take_file(source_id, file_id)?;
@@ -90,11 +88,11 @@ impl FileAssembler {
             for media_ref in text_file.media_ref {
                 let media_file = self.take_file(media_ref.0, &media_ref.1.clone());
                 if let Some(FileType::MediaFile { content }) = media_file {
-                    media_content.insert(media_ref, content);
+                    media_content.insert(media_ref.1, content);
                 }
             }
             return Some(AddedFileReturn::CompleteFile {
-                source_id,
+                source_id: source_id.unwrap_or_default(),
                 file_id: file_id.to_owned(),
                 content: text_file.content,
                 media_content,
@@ -102,10 +100,10 @@ impl FileAssembler {
         }
         None
     }
-    fn contains_media_file(&self, source_id: NodeId, media_id: &str) -> bool {
+    fn contains_media_file(&self, source_id: Option<NodeId>, media_id: &str) -> bool {
         self.files.contains_key(&(source_id, media_id.to_owned()))
     }
-    fn take_file(&mut self, source_id: NodeId, file_id: &str) -> Option<FileType> {
+    fn take_file(&mut self, source_id: Option<NodeId>, file_id: &str) -> Option<FileType> {
         self.files.remove(&(source_id, file_id.to_owned()))
     }
     fn text_files(&self) -> HashMap<&FileKey, &FileType> {
@@ -131,10 +129,9 @@ struct TextFile {
 }
 impl TextFile {
     /// # Returns
-    /// a tuple containings the new `TextFile` instance and a vec with the media that need to be fetched
+    /// a tuple containings the new `TextFile` instance and a vec with the `media_id` that need to be fetched
     fn new_textfile(content: String, size: usize) -> (Self, Vec<FileKey>) {
-        let media_ref = vec![];
-        //get media ref
+        let media_ref = search_ref(&content).unwrap_or_default();
         (
             Self {
                 content,
@@ -146,20 +143,23 @@ impl TextFile {
     }
 }
 
-///get `media_ref` from 
-/// <img href="`node_id media_id`"
+///get `media_ref` from
+/// `<img href="media_id">`
+/// 
+/// # Return
+/// An optional vec of `(None, media_id)`
 fn search_ref(file: &str) -> Option<Vec<FileKey>> {
-    let dom = Dom::parse(file).ok()?;
-    let iter = dom.children.first()?.into_iter();
-    let imgs = iter.filter_map(|item| match item {
-        Node::Element(ref element) if element.name == "img" => element.attributes["href"].clone(),
-        _ => None,
-    });
-    imgs.for_each(|reff| {
-        let split: Vec<&str> = reff.split_whitespace()
-            .collect();
-    });
-
-
-    todo!()
+    let media_ref = Dom::parse(file)
+        .ok()?
+        .children
+        .first()?
+        .into_iter()
+        .filter_map(|item| match item {
+            Node::Element(ref element) if element.name == "img" => {
+                Some((None, element.attributes["media_id"].clone()?))
+            }
+            _ => None,
+        })
+        .collect::<Vec<FileKey>>();
+    Some(media_ref)
 }

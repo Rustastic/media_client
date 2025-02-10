@@ -1,4 +1,8 @@
-use std::{collections::HashMap, thread, time::Duration};
+use std::{
+    collections::{HashMap, HashSet},
+    thread,
+    time::Duration,
+};
 
 use assembler::HighLevelMessageFactory;
 use file_assembler::FileAssembler;
@@ -19,8 +23,8 @@ mod handle_message;
 mod handle_packet;
 mod send_to;
 
-mod packet_cache;
 mod file_assembler;
+mod packet_cache;
 
 pub struct MediaClient {
     id: NodeId,
@@ -30,6 +34,7 @@ pub struct MediaClient {
 
     packet_cache: PacketCache,
     file_assembler: FileAssembler,
+    media_server: HashSet<NodeId>,
 
     controller_send: Sender<MediaClientEvent>,
     controller_recv: Receiver<MediaClientCommand>,
@@ -40,6 +45,7 @@ pub struct MediaClient {
 
 impl MediaClient {
     //constructor
+    #[must_use]
     pub fn new(
         id: NodeId,
         controller_send: Sender<MediaClientEvent>,
@@ -53,6 +59,7 @@ impl MediaClient {
             message_factory: HighLevelMessageFactory::new(id, NodeType::Client),
             packet_cache: PacketCache::new(),
             file_assembler: FileAssembler::new(),
+            media_server: HashSet::new(),
             controller_send,
             controller_recv,
             packet_recv,
