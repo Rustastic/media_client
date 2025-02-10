@@ -47,16 +47,7 @@ impl MediaClient {
                     .get_server_list()
                     .into_iter()
                     .collect::<Vec<NodeId>>();
-                self.send_controller(MediaClientEvent::ServerList(server_list.clone()));
-                for server in server_list {
-                    let Ok(header) = self.router.get_source_routing_header(server) else {
-                        continue;
-                    };
-                    let message = self.message_factory.get_message_from_message_content(FromClient(ClientMessage::GetServerType), &header, server);
-                    for fragment in message {
-                        self.send_packet(fragment, None);
-                    }
-                }
+                self.send_controller(MediaClientEvent::ServerList(server_list));
             }
             MediaClientCommand::AskServerType(id)
             | MediaClientCommand::AskFilesList(id)
