@@ -195,15 +195,21 @@ fn display_file(file: AddedFileReturn) {
             .unwrap_or_default()
             .as_secs();
         let dir_path = current_dir.join(format!("/browser/{source_id}_{file_id}_{istant}"));
-        let _ = fs::create_dir(&dir_path);
+        let _ = fs::create_dir(&dir_path).inspect_err(|e|{
+            println!("[mediaclient] error creating dir {e}");
+        });
         let file_path = dir_path.join(file_id);
 
-        if let Ok(mut text_file) = File::create(file_path.clone()) {
+        if let Ok(mut text_file) = File::create(file_path.clone()).inspect_err(|e|{
+            println!("[mediaclient] error creating textfile {e}");
+        }) {
             let _ = write!(text_file, "{content}");
             let _ = text_file.flush();
             for (media_id, m_content) in media_content {
                 if let Some(image) = get_dynimage_from_string(m_content) {
-                    let _ = image.save(dir_path.join(media_id));
+                    let _ = image.save(dir_path.join(media_id)).inspect_err(|e|{
+                        println!("[mediaclient] error creating mediaFile {e}");
+                    });
                 };
             }
         }
