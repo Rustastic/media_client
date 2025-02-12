@@ -1,4 +1,4 @@
-use log::{error, info, log};
+use log::info;
 use messages::high_level_messages::{
     ClientMessage::{self, GetMedia},
     Message,
@@ -63,7 +63,7 @@ impl MediaClient {
                             let destination = possible_dest
                                 .next()
                                 .copied()
-                                .unwrap_or(*self.media_server.get(&0).unwrap());
+                                .unwrap_or(*self.media_server.get(&0).unwrap_or(&0));
                             info!(
                                 "[MediaClient: {}] fetching ref: {destination}, {file_id}",
                                 self.id
