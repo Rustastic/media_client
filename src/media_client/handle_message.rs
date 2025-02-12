@@ -95,7 +95,7 @@ impl MediaClient {
             _ => (),
         }
     }
-    fn ask_media_server(&mut self) {
+    pub fn ask_media_server(&mut self) {
         for server in self.router.get_server_list() {
             let Ok(header) = self.router.get_source_routing_header(server) else {
                 continue;

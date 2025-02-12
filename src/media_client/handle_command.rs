@@ -66,7 +66,10 @@ impl MediaClient {
         };
         let client_message = match command {
             MediaClientCommand::AskServerType(_) => ClientMessage::GetServerType,
-            MediaClientCommand::AskFilesList(_) => ClientMessage::GetFilesList,
+            MediaClientCommand::AskFilesList(_) => {
+                self.ask_media_server();
+                ClientMessage::GetFilesList
+            },
             MediaClientCommand::AskForFile(_, file_id) => ClientMessage::GetFile(file_id),
             _ => return,
         };
