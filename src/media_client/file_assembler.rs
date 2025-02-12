@@ -207,7 +207,8 @@ fn display_file(file: AddedFileReturn) {
                 };
             }
         }
-        let _ = webbrowser::open(file_path.to_str().unwrap_or_default());
+        let e = webbrowser::open(file_path.to_str().unwrap_or_default());
+        println!("openbrowserresult: {e:?}");
     }
 }
 
