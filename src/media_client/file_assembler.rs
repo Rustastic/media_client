@@ -47,12 +47,12 @@ impl FileAssembler {
     ) -> Option<Vec<FileKey>> {
         let (text_file, media_ref) = TextFile::new_textfile(content, size);
         if media_ref.is_empty() {
-            // display_file(AddedFileReturn::CompleteFile {
-            //     source_id,
-            //     file_id: file_id.to_owned(),
-            //     content: text_file.content,
-            //     media_content: HashMap::new(),
-            // });
+            display_file(AddedFileReturn::CompleteFile {
+                source_id,
+                file_id: file_id.to_owned(),
+                content: text_file.content,
+                media_content: HashMap::new(),
+            });
             return None;
         }
         self.files.insert(
