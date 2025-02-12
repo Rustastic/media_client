@@ -53,9 +53,10 @@ impl MediaClient {
                     .add_textfile(message.source_id, &file_id, content, size)
                 {
                     None => info!("[MediaClient {}] file with no ref", self.id),
-                    Some(items) => {
+                    Some(media_ref) => {
+                        info!("[MediaClient {}] media_ref: {media_ref:?}", self.id) ;
                         let mut possible_dest = self.media_server.iter().cycle();
-                        for (_, file_id) in items {
+                        for (_, file_id) in media_ref {
                             let destination = possible_dest
                                 .next()
                                 .copied()
