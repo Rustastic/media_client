@@ -8,6 +8,7 @@ use std::{
 use base64::{engine::general_purpose, Engine};
 use html_parser::{Dom, Node};
 use image::{codecs::jpeg::JpegDecoder, DynamicImage};
+use log::error;
 use wg_2024::network::NodeId;
 
 /// `(source_id, file_id)`
@@ -195,27 +196,25 @@ fn display_file(file: AddedFileReturn) {
             .unwrap_or_default()
             .as_secs();
         let dir_path = current_dir.join("browser").join(format!("{source_id}_{file_id}_{istant}"));
-        println!("dir_path: {}", dir_path.display() );
         let _ = fs::create_dir_all(&dir_path).inspect_err(|e|{
-            println!("[mediaclient] error creating dir {e}");
+            error!("[mediaclient] error creating dir {e}");
         });
         let file_path = dir_path.join(file_id);
 
         if let Ok(mut text_file) = File::create(file_path.clone()).inspect_err(|e|{
-            println!("[mediaclient] error creating textfile {e}");
+            error!("[mediaclient] error creating textfile {e}");
         }) {
             let _ = write!(text_file, "{content}");
             let _ = text_file.flush();
             for (media_id, m_content) in media_content {
                 if let Some(image) = get_dynimage_from_string(m_content) {
                     let _ = image.save(dir_path.join(media_id)).inspect_err(|e|{
-                        println!("[mediaclient] error creating mediaFile {e}");
+                        error!("[mediaclient] error creating mediaFile {e}");
                     });
                 };
             }
         }
         let e = webbrowser::open(file_path.to_str().unwrap_or_default());
-        println!("openbrowserresult: {e:?}");
     }
 }
 

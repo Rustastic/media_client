@@ -44,7 +44,7 @@ impl MediaClient {
                 size,
                 content,
             } => {
-                println!(
+                info!(
                     "[MediaClient {}] received file: {file_id}", 
                     self.id
                 ) ;
@@ -52,28 +52,20 @@ impl MediaClient {
                     .file_assembler
                     .add_textfile(message.source_id, &file_id, content, size)
                 {
-                    None => println!("[MediaClient {}] file with no ref", self.id),
+                    None => (),
                     Some(media_ref) => {
-                        println!("[MediaClient {}] media_ref: {media_ref:?}", self.id) ;
                         let mut possible_dest = self.media_server.iter().cycle();
                         for (_, file_id) in media_ref {
-                            println!(
-                                "[MediaClient {}], fetching ref: {file_id}", self.id
-                            );
                             let destination = possible_dest
                                 .next()
                                 .copied()
                                 .unwrap_or(*self.media_server.get(&0).unwrap_or(&0));
-                            println!(
+                            info!(
                                 "[MediaClient: {}] fetching ref: {destination}, {file_id}",
                                 self.id
                             );
                             let Ok(header) = self.router.get_source_routing_header(destination)
                             else {
-                                println!(
-                                    "[MediaClient {}] destination: {destination} unrecheable",
-                                    self.id
-                                );
                                 continue;
                             };
                             let message = self.message_factory.get_message_from_message_content(
@@ -90,7 +82,7 @@ impl MediaClient {
                 }
             }
             Media(media_id, content) => {
-                println!("[MediaClient {} ] received media: {media_id}", self.id);
+                error!("[MediaClient {} ] received media: {media_id}", self.id);
                 self.file_assembler.add_media_file(&media_id, content);
             }
             _ => (),
