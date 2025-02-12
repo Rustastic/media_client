@@ -44,7 +44,7 @@ impl MediaClient {
                 size,
                 content,
             } => {
-                info!(
+                println!(
                     "[MediaClient {}] received file: {file_id}", 
                     self.id
                 ) ;
@@ -52,25 +52,25 @@ impl MediaClient {
                     .file_assembler
                     .add_textfile(message.source_id, &file_id, content, size)
                 {
-                    None => info!("[MediaClient {}] file with no ref", self.id),
+                    None => println!("[MediaClient {}] file with no ref", self.id),
                     Some(media_ref) => {
-                        info!("[MediaClient {}] media_ref: {media_ref:?}", self.id) ;
+                        println!("[MediaClient {}] media_ref: {media_ref:?}", self.id) ;
                         let mut possible_dest = self.media_server.iter().cycle();
                         for (_, file_id) in media_ref {
-                            info!(
+                            println!(
                                 "[MediaClient {}], fetching ref: {file_id}", self.id
                             );
                             let destination = possible_dest
                                 .next()
                                 .copied()
                                 .unwrap_or(*self.media_server.get(&0).unwrap_or(&0));
-                            info!(
+                            println!(
                                 "[MediaClient: {}] fetching ref: {destination}, {file_id}",
                                 self.id
                             );
                             let Ok(header) = self.router.get_source_routing_header(destination)
                             else {
-                                error!(
+                                println!(
                                     "[MediaClient {}] destination: {destination} unrecheable",
                                     self.id
                                 );
