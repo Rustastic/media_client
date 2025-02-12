@@ -17,6 +17,7 @@ type FileKey = (Option<NodeId>, String);
 
 type MediaContent = String;
 
+#[derive(Debug)]
 pub enum AddedFileReturn {
     CompleteFile {
         source_id: NodeId,
@@ -185,6 +186,7 @@ fn display_file(file: AddedFileReturn) {
         media_content,
     } = file
     {
+        println!("[MediaClient] trying displaying file: {file:?}") ;
         let Ok(current_dir) = std::env::current_dir() else {
             return;
         };
