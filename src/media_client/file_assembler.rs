@@ -196,7 +196,7 @@ fn display_file(file: AddedFileReturn) {
             .as_secs();
         let dir_path = current_dir.join("browser").join(format!("{source_id}_{file_id}_{istant}"));
         println!("dir_path: {}", dir_path.display() );
-        let _ = fs::create_dir(&dir_path).inspect_err(|e|{
+        let _ = fs::create_dir_all(&dir_path).inspect_err(|e|{
             println!("[mediaclient] error creating dir {e}");
         });
         let file_path = dir_path.join(file_id);
