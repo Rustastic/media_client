@@ -57,6 +57,9 @@ impl MediaClient {
                         info!("[MediaClient {}] media_ref: {media_ref:?}", self.id) ;
                         let mut possible_dest = self.media_server.iter().cycle();
                         for (_, file_id) in media_ref {
+                            info!(
+                                "[MediaClient {}], fetching ref: {file_id}", self.id
+                            );
                             let destination = possible_dest
                                 .next()
                                 .copied()
