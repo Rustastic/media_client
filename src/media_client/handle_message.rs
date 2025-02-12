@@ -1,6 +1,6 @@
 use log::info;
 use messages::high_level_messages::{
-    ClientMessage::GetMedia,
+    ClientMessage::{self, GetMedia},
     Message,
     MessageContent::{FromClient, FromServer},
     ServerMessage::{File, FilesList, Media, ServerType},
@@ -37,6 +37,7 @@ impl MediaClient {
                         files_ids,
                     ),
                 );
+                self.ask_media_server();
             }
             File {
                 file_id,
@@ -51,9 +52,13 @@ impl MediaClient {
                     Some(items) => {
                         let mut possible_dest = self.media_server.iter().cycle();
                         for (_, file_id) in items {
-                            let destination = possible_dest.next().copied().unwrap_or_default();
+                            let destination = possible_dest
+                                .next()
+                                .copied()
+                                .unwrap_or(*self.media_server.get(&0).unwrap());
                             info!(
-                                "[MediaClient: {}] fetching ref: {destination}, {file_id}", self.id
+                                "[MediaClient: {}] fetching ref: {destination}, {file_id}",
+                                self.id
                             );
                             let Ok(header) = self.router.get_source_routing_header(destination)
                             else {
@@ -76,6 +81,21 @@ impl MediaClient {
                 self.file_assembler.add_media_file(&media_id, content);
             }
             _ => (),
+        }
+    }
+    fn ask_media_server(&mut self) {
+        for server in self.router.get_server_list() {
+            let Ok(header) = self.router.get_source_routing_header(server) else {
+                continue;
+            };
+            let message = self.message_factory.get_message_from_message_content(
+                FromClient(ClientMessage::GetServerType),
+                &header,
+                server,
+            );
+            for fragment in message {
+                self.send_packet(fragment, None);
+            }
         }
     }
 }

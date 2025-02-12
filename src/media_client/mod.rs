@@ -6,10 +6,9 @@ use std::{
 
 use assembler::HighLevelMessageFactory;
 use file_assembler::FileAssembler;
-use messages::{client_commands::{MediaClientCommand, MediaClientEvent}, high_level_messages::ClientMessage};
-use messages::high_level_messages::MessageContent::FromClient;
-use source_routing::Router;
+use messages::client_commands::{MediaClientCommand, MediaClientEvent};
 use packet_cache::PacketCache;
+use source_routing::Router;
 
 use colored::Colorize;
 use crossbeam_channel::{select_biased, Receiver, Sender};
@@ -73,15 +72,6 @@ impl MediaClient {
     pub fn run(&mut self) {
         self.flood_network();
         thread::sleep(Duration::from_secs(3));
-        for server in self.router.get_server_list() {
-            let Ok(header) = self.router.get_source_routing_header(server) else {
-                continue;
-            };
-            let message = self.message_factory.get_message_from_message_content(FromClient(ClientMessage::GetServerType), &header, server);
-            for fragment in message {
-                self.send_packet(fragment, None);
-            }
-        }
         loop {
             select_biased! {
                 recv(self.controller_recv) -> command => {
