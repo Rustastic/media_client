@@ -1,4 +1,4 @@
-use log::{info, log};
+use log::{error, info, log};
 use messages::high_level_messages::{
     ClientMessage::{self, GetMedia},
     Message,
@@ -67,6 +67,10 @@ impl MediaClient {
                             );
                             let Ok(header) = self.router.get_source_routing_header(destination)
                             else {
+                                error!(
+                                    "[MediaClient {}] destination: {destination} unrecheable",
+                                    self.id
+                                );
                                 continue;
                             };
                             let message = self.message_factory.get_message_from_message_content(
