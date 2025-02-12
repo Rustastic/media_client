@@ -52,7 +52,7 @@ impl MediaClient {
                     .file_assembler
                     .add_textfile(message.source_id, &file_id, content, size)
                 {
-                    None => (),
+                    None => info!("[MediaClient {}] file with no ref", self.id),
                     Some(items) => {
                         let mut possible_dest = self.media_server.iter().cycle();
                         for (_, file_id) in items {
