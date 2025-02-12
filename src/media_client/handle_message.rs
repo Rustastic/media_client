@@ -79,7 +79,7 @@ impl MediaClient {
                 }
             }
             Media(media_id, content) => {
-                error!("[MediaClient {} ] received media: {media_id}", self.id);
+                info!("[MediaClient {} ] received media: {media_id}", self.id);
                 self.file_assembler.add_media_file(&media_id, content);
             }
             _ => (),
