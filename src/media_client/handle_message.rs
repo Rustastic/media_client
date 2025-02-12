@@ -1,4 +1,4 @@
-use log::info;
+use log::{info, log};
 use messages::high_level_messages::{
     ClientMessage::{self, GetMedia},
     Message,
@@ -44,6 +44,10 @@ impl MediaClient {
                 size,
                 content,
             } => {
+                info!(
+                    "[MediaClient {}] received file: {file_id}", 
+                    self.id
+                ) ;
                 match self
                     .file_assembler
                     .add_textfile(message.source_id, &file_id, content, size)
