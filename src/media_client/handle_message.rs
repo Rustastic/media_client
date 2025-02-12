@@ -1,4 +1,4 @@
-use log::info;
+use log::{error, info};
 use messages::high_level_messages::{
     ClientMessage::{self, GetMedia},
     Message,
