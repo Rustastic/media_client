@@ -179,6 +179,7 @@ fn search_ref(file: &str) -> Option<Vec<FileKey>> {
 }
 
 fn display_file(file: AddedFileReturn) {
+    println!("[MediaClient] trying displaying file: {file:?}") ;
     if let AddedFileReturn::CompleteFile {
         source_id,
         file_id,
@@ -186,7 +187,6 @@ fn display_file(file: AddedFileReturn) {
         media_content,
     } = file
     {
-        println!("[MediaClient] trying displaying file: {file:?}") ;
         let Ok(current_dir) = std::env::current_dir() else {
             return;
         };
