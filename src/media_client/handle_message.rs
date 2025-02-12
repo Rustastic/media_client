@@ -44,10 +44,7 @@ impl MediaClient {
                 size,
                 content,
             } => {
-                info!(
-                    "[MediaClient {}] received file: {file_id}", 
-                    self.id
-                ) ;
+                info!("[MediaClient {}] received file: {file_id}", self.id);
                 match self
                     .file_assembler
                     .add_textfile(message.source_id, &file_id, content, size)

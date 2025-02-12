@@ -180,7 +180,7 @@ fn search_ref(file: &str) -> Option<Vec<FileKey>> {
 }
 
 fn display_file(file: AddedFileReturn) {
-    println!("[MediaClient] trying displaying file: {file:?}") ;
+    println!("[MediaClient] trying displaying file: {file:?}");
     if let AddedFileReturn::CompleteFile {
         source_id,
         file_id,
@@ -195,26 +195,28 @@ fn display_file(file: AddedFileReturn) {
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
-        let dir_path = current_dir.join("browser").join(format!("{source_id}_{file_id}_{istant}"));
-        let _ = fs::create_dir_all(&dir_path).inspect_err(|e|{
+        let dir_path = current_dir
+            .join("browser")
+            .join(format!("{source_id}_{file_id}_{istant}"));
+        let _ = fs::create_dir_all(&dir_path).inspect_err(|e| {
             error!("[mediaclient] error creating dir {e}");
         });
         let file_path = dir_path.join(file_id);
 
-        if let Ok(mut text_file) = File::create(file_path.clone()).inspect_err(|e|{
+        if let Ok(mut text_file) = File::create(file_path.clone()).inspect_err(|e| {
             error!("[mediaclient] error creating textfile {e}");
         }) {
             let _ = write!(text_file, "{content}");
             let _ = text_file.flush();
             for (media_id, m_content) in media_content {
                 if let Some(image) = get_dynimage_from_string(m_content) {
-                    let _ = image.save(dir_path.join(media_id)).inspect_err(|e|{
+                    let _ = image.save(dir_path.join(media_id)).inspect_err(|e| {
                         error!("[mediaclient] error creating mediaFile {e}");
                     });
                 };
             }
         }
-        let e = webbrowser::open(file_path.to_str().unwrap_or_default());
+        let _ = webbrowser::open(file_path.to_str().unwrap_or_default());
     }
 }
 

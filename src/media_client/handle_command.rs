@@ -69,11 +69,11 @@ impl MediaClient {
             MediaClientCommand::AskFilesList(_) => {
                 self.ask_media_server();
                 ClientMessage::GetFilesList
-            },
+            }
             MediaClientCommand::AskForFile(_, file_id) => {
                 self.ask_media_server();
                 ClientMessage::GetFile(file_id)
-            },
+            }
             _ => return,
         };
         for fragment_packet in self.message_factory.get_message_from_message_content(
