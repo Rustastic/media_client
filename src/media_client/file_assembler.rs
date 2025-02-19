@@ -187,7 +187,7 @@ fn display_file(file: AddedFileReturn) {
         media_content,
     } = file
     {
-        println!("[MediaClient] trying displaying file: {file_id}");
+        // println!("[MediaClient] trying displaying file: {file_id}");
         let Ok(current_dir) = std::env::current_dir() else {
             return;
         };
