@@ -180,7 +180,7 @@ fn search_ref(file: &str) -> Option<Vec<FileKey>> {
 }
 
 fn display_file(file: AddedFileReturn) {
-    // println!("[MediaClient] trying displaying file: {file:?}");
+    println!("[MediaClient] trying displaying file: {file:?}");
     if let AddedFileReturn::CompleteFile {
         source_id,
         file_id,
