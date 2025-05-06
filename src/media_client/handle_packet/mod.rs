@@ -15,7 +15,7 @@ mod test;
 
 impl MediaClient {
     pub fn handle_packet(&mut self, packet: Packet) {
-        match packet.pack_type {
+        match packet.clone().pack_type {
             wg_2024::packet::PacketType::MsgFragment(ref fragment) => {
                 if self.check_packet(&packet, Some(fragment.fragment_index)) {
                     self.send_ack(fragment.fragment_index, &packet);
@@ -45,7 +45,10 @@ impl MediaClient {
                 self.packet_cache
                     .take_packet((packet.session_id, ack.fragment_index));
             }
-            wg_2024::packet::PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
+            wg_2024::packet::PacketType::Nack(nack) =>{ 
+                println!("[mediaclient {}] packet dropped: {}", self.id, packet );
+                self.handle_nack(nack, packet.session_id);
+            },
             wg_2024::packet::PacketType::FloodRequest(request) => {
                 let res = self.get_flood_response(request, packet.session_id);
                 self.send_packet(res, None);
