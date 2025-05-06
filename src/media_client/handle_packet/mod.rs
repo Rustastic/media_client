@@ -92,10 +92,12 @@ impl MediaClient {
     fn resend_for_nack(&mut self, session_id: u64, fragment_index: u64, nack_src: NodeId) {
         let Some((mut packet, freq)) = self.packet_cache.get_value((session_id, fragment_index))
         else {
+            println!("[MediaClient {}] error extracting from cache", self.id);
             self.send_controller(ErrorPacketCache(session_id, fragment_index));
             return;
         };
-        if freq > 10 {
+        if freq > 5 {
+            println!("[MediaClient {}] extracted more than 5", self.id);
             // consider the drone crashed and reget a header
             let _ = self.router.drone_crashed(nack_src).inspect_err(|_| {
                 self.reinit_network();
@@ -108,28 +110,30 @@ impl MediaClient {
                 return;
             };
             self.flood_network();
-
+            
             let new_packet = Packet {
                 routing_header: new_header,
                 ..packet
             };
             packet = new_packet;
-        } else if freq > 5 {
-            // reflood network and reget a header
-            self.flood_network();
-            let Some(destination) = packet.routing_header.destination() else {
-                return;
-            };
-            let Ok(new_header) = self.router.get_source_routing_header(destination) else {
-                self.send_controller(UnreachableNode(destination));
-                return;
-            };
-            let new_packet = Packet {
-                routing_header: new_header,
-                ..packet
-            };
-            packet = new_packet;
-        }
+        } 
+        // else if freq > 2 {
+        //     println!("[MediaClient {}] extracted more than 5", self.id);
+        //     // reflood network and reget a header
+        //     self.flood_network();
+        //     let Some(destination) = packet.routing_header.destination() else {
+        //         return;
+        //     };
+        //     let Ok(new_header) = self.router.get_source_routing_header(destination) else {
+        //         self.send_controller(UnreachableNode(destination));
+        //         return;
+        //     };
+        //     let new_packet = Packet {
+        //         routing_header: new_header,
+        //         ..packet
+        //     };
+        //     packet = new_packet;
+        // }
         self.send_packet(packet, None);
     }
     fn check_packet(&self, packet: &Packet, fragment_index: Option<u64>) -> bool {
