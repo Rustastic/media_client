@@ -81,6 +81,7 @@ impl MediaClient {
             &header,
             destination,
         ) {
+            println!("[Mediaclient {}] inserting packet ({}, {})", self.id, fragment_packet.session_id, fragment_packet.get_fragment_index());
             self.packet_cache.insert_packet(&fragment_packet);
             self.send_packet(fragment_packet, None);
         }

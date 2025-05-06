@@ -47,7 +47,7 @@ impl MediaClient {
             }
             wg_2024::packet::PacketType::Nack(nack) =>{ 
                 println!("[mediaclient {}] packet dropped: {}", self.id, packet );
-                self.handle_nack(nack, packet.session_id);
+                self.handle_nack(nack, packet.session_id, packet.routing_header.hops[0]);
             },
             wg_2024::packet::PacketType::FloodRequest(request) => {
                 let res = self.get_flood_response(request, packet.session_id);
@@ -59,7 +59,7 @@ impl MediaClient {
         }
     }
     #[allow(clippy::needless_pass_by_value)] //want to consume the nack
-    pub fn handle_nack(&mut self, nack: Nack, session_id: u64) {
+    pub fn handle_nack(&mut self, nack: Nack, session_id: u64, nack_src: NodeId) {
         match nack.nack_type {
             wg_2024::packet::NackType::ErrorInRouting(crashed_id) => {
                 error!(
@@ -80,7 +80,7 @@ impl MediaClient {
             }
             wg_2024::packet::NackType::Dropped => {
                 error!("{} [MediaClient. {}]: Nack dropped", "✗".red(), self.id);
-                self.resend_for_nack(session_id, nack.fragment_index, self.id);
+                self.resend_for_nack(session_id, nack.fragment_index, nack_src);
             }
             wg_2024::packet::NackType::UnexpectedRecipient(id) => {
                 error!(
