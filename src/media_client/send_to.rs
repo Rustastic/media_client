@@ -62,7 +62,7 @@ impl MediaClient {
             .send(msg.clone())
             .inspect(|()| {
                 println!(
-                    "[Mediaclient {}] sended msg (session: {}, fragment: {})",
+                    "[Mediaclient {}] sended msg (session: {}, fragment: {}), msg: {msg}",
                     self.id,
                     msg.session_id,
                     msg.get_fragment_index()
