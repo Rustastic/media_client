@@ -45,10 +45,10 @@ impl MediaClient {
                 self.packet_cache
                     .take_packet((packet.session_id, ack.fragment_index));
             }
-            wg_2024::packet::PacketType::Nack(nack) =>{ 
-                println!("[mediaclient {}] packet dropped: {}", self.id, packet );
+            wg_2024::packet::PacketType::Nack(nack) => {
+                println!("[mediaclient {}] packet dropped: {}", self.id, packet);
                 self.handle_nack(nack, packet.session_id, packet.routing_header.hops[0]);
-            },
+            }
             wg_2024::packet::PacketType::FloodRequest(request) => {
                 let res = self.get_flood_response(request, packet.session_id);
                 self.send_packet(res, None);
@@ -113,13 +113,13 @@ impl MediaClient {
                 return;
             };
             self.flood_network();
-            
+
             let new_packet = Packet {
                 routing_header: new_header,
                 ..packet
             };
             packet = new_packet;
-        } 
+        }
         // else if freq > 2 {
         //     println!("[MediaClient {}] extracted more than 5", self.id);
         //     // reflood network and reget a header

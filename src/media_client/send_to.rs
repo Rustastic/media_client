@@ -40,6 +40,11 @@ impl MediaClient {
                         "✗".red(),
                         self.id
                     );
+                    println!(
+                        "{} [MediaClient {}] error taking next_hop on msg_frgmt",
+                        "✗".red(),
+                        self.id
+                    );
                     return;
                 };
                 info!(
@@ -54,7 +59,15 @@ impl MediaClient {
     fn send_to_sender(&self, msg: Packet, sender: &Sender<Packet>) {
         info!("{} [MediaClient {}] sending packet", "✓".green(), self.id);
         sender
-            .send(msg)
+            .send(msg.clone())
+            .inspect(|| {
+                println!(
+                    "[Mediaclient {}] sended msg (session: {}, fragment: {})",
+                    self.id,
+                    msg.session_id,
+                    msg.get_fragment_index()
+                );
+            })
             .inspect_err(|e| {
                 self.send_controller(MediaClientEvent::SendError(e.clone()));
                 error!(
