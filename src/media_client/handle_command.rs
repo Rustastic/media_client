@@ -1,5 +1,5 @@
 use colored::Colorize;
-use log::{error, warn};
+use log::{error, info, warn};
 use messages::high_level_messages::MessageContent::FromClient;
 use messages::{
     client_commands::{MediaClientCommand, MediaClientEvent},
@@ -18,6 +18,10 @@ impl MediaClient {
                     .packet_send
                     .remove(&id)
                     .inspect(|_| {
+                        info!(
+                            "[ MediaClient {} ]  disconnected from [ Drone {id} ]",
+                            self.id
+                        );
                         self.send_controller(MediaClientEvent::RemovedSender(id));
                     })
                     .ok_or(())
