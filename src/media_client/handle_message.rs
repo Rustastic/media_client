@@ -97,6 +97,7 @@ impl MediaClient {
                 server,
             );
             for fragment in message {
+                self.packet_cache.insert_packet(&fragment);
                 self.send_packet(fragment, None);
             }
         }
