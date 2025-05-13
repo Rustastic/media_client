@@ -60,7 +60,7 @@ impl MediaClient {
         info!("{} [MediaClient {}] sending packet", "✓".green(), self.id);
         sender
             .send(msg.clone())
-            .inspect(|| {
+            .inspect(|()| {
                 println!(
                     "[Mediaclient {}] sended msg (session: {}, fragment: {})",
                     self.id,
