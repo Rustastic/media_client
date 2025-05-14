@@ -1,5 +1,5 @@
 use colored::Colorize;
-use log::error;
+use log::{error, info};
 use messages::client_commands::MediaClientEvent::{
     DestinationIsDrone, ErrorPacketCache, UnreachableNode,
 };
@@ -118,6 +118,8 @@ impl MediaClient {
                 routing_header: new_header,
                 ..packet
             };
+            info!("[MediaClient {}] new_header: {}", self.id, new_packet.routing_header);
+            println!("[MediaClient {}] new_header: {}", self.id, new_packet.routing_header);
             packet = new_packet;
         }
         // else if freq > 2 {
