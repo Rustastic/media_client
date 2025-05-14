@@ -37,6 +37,8 @@ impl MediaClient {
                         files_ids,
                     ),
                 );
+                info!("[MediaClient {}] receveid files_list", self.id);
+                println!("[MediaClient {}] receveid files_list", self.id);
                 self.ask_media_server();
             }
             File {
