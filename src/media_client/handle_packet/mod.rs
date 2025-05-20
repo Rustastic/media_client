@@ -112,7 +112,7 @@ impl MediaClient {
         };
         self.send_packet(new_packet, None);
 
-        if freq > 16 {
+        if freq > 100 {
             self.reinit_network();
         }
         // if freq > 5 {
