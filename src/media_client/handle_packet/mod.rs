@@ -113,10 +113,10 @@ impl MediaClient {
         };
         self.send_packet(new_packet, None);
         // if freq > 5 {
-            //     println!("[MediaClient {}] extracted more than 5", self.id);
-            //     // consider the drone crashed and reget a header
-            //     let _ = self.router.drone_crashed(nack_src).inspect_err(|_| {
-                //         self.reinit_network();
+        //     println!("[MediaClient {}] extracted more than 5", self.id);
+        //     // consider the drone crashed and reget a header
+        //     let _ = self.router.drone_crashed(nack_src).inspect_err(|_| {
+        //         self.reinit_network();
         //     });
         //     let Some(destination) = packet.routing_header.destination() else {
         //         return;

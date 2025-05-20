@@ -56,6 +56,7 @@ impl MediaClient {
             }
         }
     }
+    #[allow(clippy::needless_pass_by_value)]
     fn send_to_sender(&self, msg: Packet, sender: &Sender<Packet>) {
         info!("{} [MediaClient {}] sending packet", "✓".green(), self.id);
         sender

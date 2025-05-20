@@ -213,7 +213,7 @@ fn display_file(file: AddedFileReturn) {
                     let _ = image.save(dir_path.join(media_id)).inspect_err(|e| {
                         error!("[mediaclient] error creating mediaFile {e}");
                     });
-                };
+                }
             }
         }
         let _ = webbrowser::open(file_path.to_str().unwrap_or_default());
