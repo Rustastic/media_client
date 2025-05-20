@@ -93,8 +93,7 @@ impl MediaClient {
         }
     }
     fn resend_for_nack(&mut self, session_id: u64, fragment_index: u64, nack_src: NodeId) {
-        let Some((packet, _freq)) = self.packet_cache.get_value((session_id, fragment_index))
-        else {
+        let Some((packet, freq)) = self.packet_cache.get_value((session_id, fragment_index)) else {
             println!("[MediaClient {}] error extracting from cache ({session_id}, {fragment_index}) nack_src: {nack_src}", self.id);
             self.send_controller(ErrorPacketCache(session_id, fragment_index));
             return;
@@ -112,6 +111,10 @@ impl MediaClient {
             ..packet
         };
         self.send_packet(new_packet, None);
+
+        if freq > 16 {
+            self.reinit_network();
+        }
         // if freq > 5 {
         //     println!("[MediaClient {}] extracted more than 5", self.id);
         //     // consider the drone crashed and reget a header
