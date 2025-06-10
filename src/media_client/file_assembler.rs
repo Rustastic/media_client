@@ -134,7 +134,7 @@ impl FileAssembler {
 
 enum FileType {
     TextFile(TextFile),
-    MediaFile { content: MediaContent },
+    MediaFile { content: String },
 }
 
 struct TextFile {
@@ -201,7 +201,7 @@ fn display_file(file: AddedFileReturn) {
         let _ = fs::create_dir_all(&dir_path).inspect_err(|e| {
             error!("[mediaclient] error creating dir {e}");
         });
-        let file_path = dir_path.join(file_id);
+        let file_path = dir_path.join(file_id).with_extension("html");
 
         if let Ok(mut text_file) = File::create(file_path.clone()).inspect_err(|e| {
             error!("[mediaclient] error creating textfile {e}");
@@ -241,11 +241,11 @@ fn get_dynimage_from_string(base_64: String) -> Option<DynamicImage> {
 
 //     test_args(base_64);
 
-//     // let mut media_content = HashMap::new();
-//     // media_content.insert("media2.jpg".to_string(), file_media_content);
-//     // let complete_file = AddedFileReturn::CompleteFile { source_id: 2, file_id: "text.html".to_string(), content: text_content, media_content };
-//     // display_file(complete_file);
-//     // println!("{:?}", std::env::current_dir());
+//     let mut media_content = HashMap::new();
+//     media_content.insert("media2.jpg".to_string(), file_media_content);
+//     let complete_file = AddedFileReturn::CompleteFile { source_id: 2, file_id: "text.html".to_string(), content: text_content, media_content };
+//     display_file(complete_file);
+//     println!("{:?}", std::env::current_dir());
 // }
 
 // fn test_args( base_64: String ) {
