@@ -93,7 +93,7 @@ impl MediaClient {
         }
     }
     fn resend_for_nack(&mut self, session_id: u64, fragment_index: u64, nack_src: NodeId) {
-        let Some((packet, freq)) = self.packet_cache.get_value((session_id, fragment_index)) else {
+        let Some((packet, _)) = self.packet_cache.get_value((session_id, fragment_index)) else {
             println!("[MediaClient {}] error extracting from cache ({session_id}, {fragment_index}) nack_src: {nack_src}", self.id);
             self.send_controller(ErrorPacketCache(session_id, fragment_index));
             return;
