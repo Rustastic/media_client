@@ -111,10 +111,6 @@ impl MediaClient {
             ..packet
         };
         self.send_packet(new_packet, None);
-
-        if freq > 100 {
-            self.reinit_network();
-        }
         // if freq > 5 {
         //     println!("[MediaClient {}] extracted more than 5", self.id);
         //     // consider the drone crashed and reget a header
