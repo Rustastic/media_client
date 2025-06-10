@@ -32,6 +32,7 @@ impl MediaClient {
                             self.id
                         );
                     });
+                    self.reinit_network();
             }
             MediaClientCommand::AddSender(id, sender) => {
                 if let std::collections::hash_map::Entry::Vacant(e) = self.packet_send.entry(id) {
@@ -44,6 +45,7 @@ impl MediaClient {
                         self.id
                     );
                 }
+                self.reinit_network();
             }
             MediaClientCommand::GetServerList => {
                 let server_list = self
