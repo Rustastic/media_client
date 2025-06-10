@@ -101,7 +101,7 @@ impl MediaClient {
             let req = self.router.get_flood_request();
             self.send_packet(req, Some(sender));
         }
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_secs(2));
     }
     // fn get_discovered_server(&self, id: NodeId) -> Option<&DiscoveredServer> {
     //     let index = self.discovered_servers.iter().position(|s| s.id == id)?;
