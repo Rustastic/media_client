@@ -65,6 +65,11 @@ impl MediaClient {
                             );
                             let Ok(header) = self.router.get_source_routing_header(destination)
                             else {
+                                self.send_controller(
+                                    messages::client_commands::MediaClientEvent::UnreachableNode(
+                                        destination,
+                                    ),
+                                );
                                 continue;
                             };
                             let message = self.message_factory.get_message_from_message_content(
@@ -91,6 +96,9 @@ impl MediaClient {
     pub fn ask_media_server(&mut self) {
         for server in self.router.get_server_list() {
             let Ok(header) = self.router.get_source_routing_header(server) else {
+                self.send_controller(
+                    messages::client_commands::MediaClientEvent::UnreachableNode(server),
+                );
                 continue;
             };
             let message = self.message_factory.get_message_from_message_content(

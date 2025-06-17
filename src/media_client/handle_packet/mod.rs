@@ -67,7 +67,7 @@ impl MediaClient {
                     "✗".red(),
                     self.id,
                 );
-                let _ = self.router.drone_crashed(crashed_id);
+                self.router.drone_crashed(crashed_id);
                 self.resend_for_nack(session_id, nack.fragment_index, crashed_id);
             }
             wg_2024::packet::NackType::DestinationIsDrone => {
@@ -93,7 +93,7 @@ impl MediaClient {
         }
     }
     fn resend_for_nack(&mut self, session_id: u64, fragment_index: u64, nack_src: NodeId) {
-        let Some((packet, _)) = self.packet_cache.get_value((session_id, fragment_index)) else {
+        let Some((packet, freq)) = self.packet_cache.get_value((session_id, fragment_index)) else {
             println!("[MediaClient {}] error extracting from cache ({session_id}, {fragment_index}) nack_src: {nack_src}", self.id);
             self.send_controller(ErrorPacketCache(session_id, fragment_index));
             return;
@@ -104,6 +104,7 @@ impl MediaClient {
         };
         let Ok(new_header) = self.router.get_source_routing_header(destination) else {
             self.send_controller(UnreachableNode(destination));
+            self.send_packet(packet, None);
             return;
         };
         let new_packet = Packet {
@@ -111,29 +112,9 @@ impl MediaClient {
             ..packet
         };
         self.send_packet(new_packet, None);
-        // if freq > 5 {
-        //     println!("[MediaClient {}] extracted more than 5", self.id);
-        //     // consider the drone crashed and reget a header
-        //     let _ = self.router.drone_crashed(nack_src).inspect_err(|_| {
-        //         self.reinit_network();
-        //     });
-        //     let Some(destination) = packet.routing_header.destination() else {
-        //         return;
-        //     };
-        //     let Ok(new_header) = self.router.get_source_routing_header(destination) else {
-        //         self.send_controller(UnreachableNode(destination));
-        //         return;
-        //     };
-        //     self.flood_network();
-
-        //     let new_packet = Packet {
-        //         routing_header: new_header,
-        //         ..packet
-        //     };
-        //     info!("[MediaClient {}] new_header: {}", self.id, new_packet.routing_header);
-        //     println!("[MediaClient {}] new_header: {}", self.id, new_packet.routing_header);
-        //     packet = new_packet;
-        // }
+        if freq > 100 {
+            self.flood_network();
+        }
     }
     fn check_packet(&self, packet: &Packet, fragment_index: Option<u64>) -> bool {
         let hop_index = packet.routing_header.hop_index;
