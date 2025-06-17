@@ -10,9 +10,7 @@ use messages::client_commands::{MediaClientCommand, MediaClientEvent};
 use packet_cache::PacketCache;
 use source_routing::Router;
 
-use colored::Colorize;
 use crossbeam_channel::{select_biased, Receiver, Sender};
-use log::info;
 use wg_2024::{
     network::NodeId,
     packet::{NodeType, Packet},
@@ -86,15 +84,6 @@ impl MediaClient {
                 }
             }
         }
-    }
-    fn reinit_network(&mut self) {
-        info!(
-            "{} [ Mediaclient {} ]: reinitializing the network...",
-            "✓".green(),
-            self.id
-        );
-        // self.router.clear_routing_table();
-        self.flood_network();
     }
     fn flood_network(&mut self) {
         let requests = self.router.get_flood_requests(self.packet_send.len());

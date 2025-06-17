@@ -12,7 +12,7 @@ use super::MediaClient;
 impl MediaClient {
     pub fn handle_command(&mut self, command: MediaClientCommand) {
         match command {
-            MediaClientCommand::InitFlooding => self.reinit_network(),
+            MediaClientCommand::InitFlooding => self.flood_network(),
             MediaClientCommand::RemoveSender(id) => {
                 let _ = self
                     .packet_send
@@ -32,7 +32,7 @@ impl MediaClient {
                             self.id
                         );
                     });
-                // self.reinit_network();
+                // self.flood_network();
                 self.router.remove_neighbour(id);
             }
             MediaClientCommand::AddSender(id, sender) => {
@@ -46,7 +46,7 @@ impl MediaClient {
                         self.id
                     );
                 }
-                // self.reinit_network();
+                // self.flood_network();
                 self.router.add_neighbour(id);
             }
             MediaClientCommand::GetServerList => {
