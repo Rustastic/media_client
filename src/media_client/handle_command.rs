@@ -32,7 +32,7 @@ impl MediaClient {
                             self.id
                         );
                     });
-                // self.flood_network();
+                self.flood_network();
                 self.router.remove_neighbour(id);
             }
             MediaClientCommand::AddSender(id, sender) => {
@@ -46,7 +46,7 @@ impl MediaClient {
                         self.id
                     );
                 }
-                // self.flood_network();
+                self.flood_network();
                 self.router.add_neighbour(id);
             }
             MediaClientCommand::GetServerList => {
